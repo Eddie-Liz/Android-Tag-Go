@@ -18,7 +18,8 @@ data class LoginUiState(
 )
 
 enum class ServerRegion(val label: String, val url: String) {
-    AP("Asia-Pacific 1", "http://192.168.103.17:8080/"),
+    AP("Asia-Pacific 1", "https://mct-api.rooticare.com"),
+    DEV("Local (192.168.103.17)", "http://192.168.103.17:8080/"),
     AP_OFFICIAL("AP_API_URL", "https://mct-api.rooticare.com"),
     AP2("Asia-Pacific 2", "https://mct2-api.rooticare.com"),
     EU("Europe", "https://mcteu-api.rooticare.com")
