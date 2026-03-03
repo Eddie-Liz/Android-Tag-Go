@@ -2,9 +2,9 @@ package com.rootilabs.wmeCardiac
 
 object Constants {
     // Server regions
-    const val AP_API_URL  = "https://mct-api.rooticare.com"
-    const val AP2_API_URL = "https://mct2-api.rooticare.com"
-    const val EU_API_URL  = "https://mcteu-api.rooticare.com"
+    const val AP_API_URL  = "https://mct-api.rooticare.com/"
+    const val AP2_API_URL = "https://mct2-api.rooticare.com/"
+    const val EU_API_URL  = "https://mcteu-api.rooticare.com/"
     const val DEV_API_URL = "http://192.168.103.17:8080/"
     const val EMU_API_URL = "http://10.0.2.2:8080/"
 
