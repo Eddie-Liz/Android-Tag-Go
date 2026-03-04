@@ -75,6 +75,10 @@ class LoginViewModel : ViewModel() {
             }
 
             // Step 3: Get Current Measurement
+            // IMPORTANT: capture oldMeasureId BEFORE the API call, because
+            // getCurrentMeasurement() will overwrite tokenManager.measureRecordId with the server value.
+            val oldMeasureId = ServiceLocator.tokenManager.measureRecordId
+
             uiState = uiState.copy(statusMessage = "STATUS_MEASUREMENT")
             val measureResult = repository.getCurrentMeasurement(institutionId, patientId)
             Log.d(TAG, "Step 3 getCurrentMeasurement: success=${measureResult.isSuccess}")
@@ -119,12 +123,11 @@ class LoginViewModel : ViewModel() {
             }
 
             // Step 4: Check measureRecordId - same session or new session?
-            val oldMeasureId = ServiceLocator.tokenManager.measureRecordId
             val newMeasureId = measurementInfo.measureRecordId
             Log.d(TAG, "Step 4 measureRecordId check: old=$oldMeasureId, new=$newMeasureId")
 
             if (oldMeasureId != null && newMeasureId != null && oldMeasureId != newMeasureId) {
-                // Different measureRecordId → different measurement session (possibly same patient name but different record)
+                // Different measureRecordId → different measurement session
                 Log.w(TAG, "measureRecordId changed ($oldMeasureId → $newMeasureId), clearing old local tags")
                 repository.clearLocalEventTags()
             } else if (oldMeasureId == newMeasureId) {

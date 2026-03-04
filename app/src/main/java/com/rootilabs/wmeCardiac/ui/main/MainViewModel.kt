@@ -177,6 +177,11 @@ class MainViewModel : ViewModel() {
                 val patientId = tokenManager.patientId ?: ""
                 
                 if (institutionId.isNotEmpty() && patientId.isNotEmpty()) {
+                    // IMPORTANT: capture localMeasureId BEFORE API call.
+                    // repository.getCurrentMeasurement() will overwrite tokenManager.measureRecordId
+                    // with the server's value, so we must read the old value first.
+                    val localMeasureId = tokenManager.measureRecordId
+
                     val result = repository.getCurrentMeasurement(institutionId, patientId)
                     if (result.isSuccess) {
                         val info = result.getOrNull()
@@ -191,7 +196,6 @@ class MainViewModel : ViewModel() {
                         } else {
                             val serverStatus = info.isMeasuring()
                             val serverMeasureId = info.measureRecordId
-                            val localMeasureId = tokenManager.measureRecordId
 
                             Log.d(TAG, "checkRecordingStatus: serverStatus=$serverStatus, serverMeasureId=$serverMeasureId, localMeasureId=$localMeasureId")
 
