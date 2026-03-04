@@ -324,7 +324,7 @@ fun MainScreen(
                                     val now = Date()
                                     currentTime.value = SimpleDateFormat("HH:mm", Locale.getDefault()).format(now)
                                     currentDate.value = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(now)
-                                    if (counter % 10 == 0) {
+                                    if (counter % 3 == 0) {
                                         viewModel.checkRecordingStatus()
                                         viewModel.loadEventTags()
                                     }

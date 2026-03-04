@@ -180,26 +180,36 @@ class MainViewModel : ViewModel() {
                     val result = repository.getCurrentMeasurement(institutionId, patientId)
                     if (result.isSuccess) {
                         val info = result.getOrNull()
-                        val serverStatus = info?.isMeasuring() ?: false
-                        val serverMeasureId = info?.measureRecordId
-                        val localMeasureId = tokenManager.measureRecordId
 
-                        Log.d(TAG, "checkRecordingStatus: serverStatus=$serverStatus, serverMeasureId=$serverMeasureId, localMeasureId=$localMeasureId")
+                        // info == null means 404: recording was deleted
+                        if (info == null) {
+                            Log.w(TAG, "checkRecordingStatus: session deleted (404), forcing isMeasuring=false")
+                            if (uiState.isMeasuring) {
+                                uiState = uiState.copy(isMeasuring = false)
+                                tokenManager.isMeasuring = false
+                            }
+                        } else {
+                            val serverStatus = info.isMeasuring()
+                            val serverMeasureId = info.measureRecordId
+                            val localMeasureId = tokenManager.measureRecordId
 
-                        // If measureRecordId changed → different session, treat as NOT_MEASURING
-                        val isNewSession = serverStatus
-                            && serverMeasureId != null
-                            && localMeasureId != null
-                            && serverMeasureId != localMeasureId
+                            Log.d(TAG, "checkRecordingStatus: serverStatus=$serverStatus, serverMeasureId=$serverMeasureId, localMeasureId=$localMeasureId")
 
-                        if (isNewSession) {
-                            Log.w(TAG, "measureRecordId changed ($localMeasureId → $serverMeasureId), treating as NOT_MEASURING")
-                            uiState = uiState.copy(isMeasuring = false)
-                            tokenManager.isMeasuring = false
-                        } else if (uiState.isMeasuring != serverStatus) {
-                            Log.d(TAG, "Recording status sync: local=${uiState.isMeasuring} -> server=$serverStatus")
-                            uiState = uiState.copy(isMeasuring = serverStatus)
-                            tokenManager.isMeasuring = serverStatus
+                            // If measureRecordId changed → different session, treat as NOT_MEASURING
+                            val isNewSession = serverStatus
+                                && serverMeasureId != null
+                                && localMeasureId != null
+                                && serverMeasureId != localMeasureId
+
+                            if (isNewSession) {
+                                Log.w(TAG, "measureRecordId changed ($localMeasureId → $serverMeasureId), treating as NOT_MEASURING")
+                                uiState = uiState.copy(isMeasuring = false)
+                                tokenManager.isMeasuring = false
+                            } else if (uiState.isMeasuring != serverStatus) {
+                                Log.d(TAG, "Recording status sync: local=${uiState.isMeasuring} -> server=$serverStatus")
+                                uiState = uiState.copy(isMeasuring = serverStatus)
+                                tokenManager.isMeasuring = serverStatus
+                            }
                         }
                     } else {
                         // Network error or server unreachable → keep current state to allow offline tagging
