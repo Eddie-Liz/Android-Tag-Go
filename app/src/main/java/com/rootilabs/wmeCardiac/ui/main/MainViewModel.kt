@@ -209,6 +209,9 @@ class MainViewModel : ViewModel() {
                                 Log.w(TAG, "measureRecordId changed ($localMeasureId → $serverMeasureId), treating as NOT_MEASURING")
                                 uiState = uiState.copy(isMeasuring = false)
                                 tokenManager.isMeasuring = false
+                                // Restore old ID so subsequent polling calls keep detecting the mismatch
+                                // and keep the Tag button locked until user logs out and re-logs in.
+                                tokenManager.measureRecordId = localMeasureId
                             } else if (uiState.isMeasuring != serverStatus) {
                                 Log.d(TAG, "Recording status sync: local=${uiState.isMeasuring} -> server=$serverStatus")
                                 uiState = uiState.copy(isMeasuring = serverStatus)
