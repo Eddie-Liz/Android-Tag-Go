@@ -303,6 +303,21 @@ class RootiCareRepository(
             } else {
                 val errorBody = result.errorBody()?.string()
                 Log.e(TAG, "Upload failed: HTTP ${result.code()} - $errorBody")
+
+                // HTTP 500 with DuplicateKeyException means the tag already exists on the server.
+                // Treat as already synced to avoid infinite retry loops.
+                if (result.code() == 500 && errorBody?.contains("DuplicateKeyException") == true) {
+                    Log.w(TAG, "Duplicate key detected — tag already on server, marking as synced")
+                    val updatedTags = tags.map { it.copy(isEdit = false, isRead = true) }
+                    database.eventTagDao().insertAll(updatedTags)
+                    return@try Result.success(
+                        com.rootilabs.wmeCardiac.data.model.AddVirtualTagsResponse(
+                            addedSize = tags.size,
+                            failedSize = 0
+                        )
+                    )
+                }
+
                 val apiError = parseError(errorBody)
                 Result.failure(Exception(apiError))
             }

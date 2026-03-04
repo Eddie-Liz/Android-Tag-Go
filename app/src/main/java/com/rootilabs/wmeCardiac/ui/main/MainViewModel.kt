@@ -292,14 +292,13 @@ class MainViewModel : ViewModel() {
             )
             
             repository.saveEventTag(entity)
-            
+
             uiState = uiState.copy(
                 tagFlowStep = TagFlowStep.IDLE,
                 lastTagTime = entity.tagLocalTime
             )
-            loadEventTags()
 
-            // Try to upload immediately
+            // Upload immediately first, THEN reload (to avoid triggerAutoSync racing with this upload)
             Log.d(TAG, "Attempting auto-upload for new tag: ${entity.id}")
             val uploadResult = repository.uploadVirtualEventTags(listOf(entity))
             if (uploadResult.isSuccess) {
@@ -307,6 +306,8 @@ class MainViewModel : ViewModel() {
             } else {
                 Log.e(TAG, "Auto-upload failed: ${uploadResult.exceptionOrNull()?.message}")
             }
+
+            loadEventTags()
         }
     }
 
