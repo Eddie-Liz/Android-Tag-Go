@@ -292,7 +292,7 @@ class RootiCareRepository(
 
             if (result.isSuccessful) {
                 val response = result.body()!!
-                Log.d(TAG, "Upload success: addedSize=${response.addedSize}, failedSize=${response.failedSize}")
+                Log.d(TAG, "Upload success: addedSize=${response.addedSize}, updatedSize=${response.updatedSize}, failedSize=${response.failedSize}, ignoredSize=${response.ignoredSize}")
                 // Mark as uploaded in local DB — isEdit=false means synced, isRead=true hides resend icon
                 val updatedTags = tags.map { it.copy(isEdit = false, isRead = true) }
                 database.eventTagDao().insertAll(updatedTags)
@@ -301,18 +301,27 @@ class RootiCareRepository(
                 val errorBody = result.errorBody()?.string()
                 Log.e(TAG, "Upload failed: HTTP ${result.code()} - $errorBody")
 
-                // HTTP 500 with DuplicateKeyException means the tag already exists on the server.
-                // Treat as already synced to avoid infinite retry loops.
-                if (result.code() == 500 && errorBody?.contains("DuplicateKeyException") == true) {
-                    Log.w(TAG, "Duplicate key detected — tag already on server, marking as synced")
-                    val updatedTags = tags.map { it.copy(isEdit = false, isRead = true) }
-                    database.eventTagDao().insertAll(updatedTags)
-                    Result.success(
-                        AddVirtualTagsResponse(addedSize = tags.size, failedSize = 0)
-                    )
-                } else {
-                    val apiError = parseError(errorBody)
-                    Result.failure(Exception(apiError))
+                when {
+                    // HTTP 409 invalid_measure_record = measure record is ABANDONED (closed).
+                    // Per API doc, already-closed records CAN still receive tags.
+                    // Treat as synced to avoid infinite retry.
+                    result.code() == 409 && errorBody?.contains("invalid_measure_record") == true -> {
+                        Log.w(TAG, "Measure record ABANDONED — marking tags as synced")
+                        val updatedTags = tags.map { it.copy(isEdit = false, isRead = true) }
+                        database.eventTagDao().insertAll(updatedTags)
+                        Result.success(AddVirtualTagsResponse(addedSize = tags.size, failedSize = 0))
+                    }
+                    // HTTP 500 DuplicateKeyException = tag already exists on server.
+                    result.code() == 500 && errorBody?.contains("DuplicateKeyException") == true -> {
+                        Log.w(TAG, "Duplicate key detected — tag already on server, marking as synced")
+                        val updatedTags = tags.map { it.copy(isEdit = false, isRead = true) }
+                        database.eventTagDao().insertAll(updatedTags)
+                        Result.success(AddVirtualTagsResponse(addedSize = tags.size, failedSize = 0))
+                    }
+                    else -> {
+                        val apiError = parseError(errorBody)
+                        Result.failure(Exception(apiError))
+                    }
                 }
             }
         } catch (e: Exception) {
