@@ -76,22 +76,19 @@ class LoginViewModel : ViewModel() {
                 val serverMeasureId = measureCheck.getOrNull()?.measureRecordId
                 Log.w(TAG, "409 check: localMeasureId=$localMeasureId, serverMeasureId=$serverMeasureId")
 
-                val isAnotherDevice = localMeasureId != null && localMeasureId != serverMeasureId
+                val isStaleSessionFromThisDevice = localMeasureId != null && localMeasureId == serverMeasureId
 
-                if (isAnotherDevice) {
-                    // Local has a DIFFERENT measureRecordId → genuinely another device is active
-                    Log.w(TAG, "Another device is logged in (local=$localMeasureId, server=$serverMeasureId), blocking login")
-                    uiState = uiState.copy(isLoading = false, error = "ALREADY_SUBSCRIBED")
-                    return
-                } else {
-                    // null local (new device) OR same measureRecordId (stale session) → revoke and retry
-                    // Use revokeOldSession() instead of unsubscribePatient() to avoid:
-                    //   1. clearLocalData() wiping the current token
-                    //   2. LogoutWorker being enqueued and running AFTER successful login
-                    Log.w(TAG, "New device or stale session → revoking old session and retrying login")
+                if (isStaleSessionFromThisDevice) {
+                    // Exactly the same session ID → this device's stale session → auto-revoke and retry
+                    Log.w(TAG, "Stale session from this device → revoking and retrying login")
                     repository.revokeOldSession(institutionId, patientId)
                     authResult = repository.authPatient(institutionId, patientId)
                     Log.d(TAG, "Step 2 retry authPatient: success=${authResult.isSuccess}")
+                } else {
+                    // Different device OR new install (localId is null) → block login as per 409 policy
+                    Log.w(TAG, "Another device is active (or new install) → blocking login per 409 policy")
+                    uiState = uiState.copy(isLoading = false, error = "ALREADY_SUBSCRIBED")
+                    return
                 }
             }
 
