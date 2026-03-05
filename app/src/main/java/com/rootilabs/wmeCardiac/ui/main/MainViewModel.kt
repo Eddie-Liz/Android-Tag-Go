@@ -199,23 +199,24 @@ class MainViewModel : ViewModel() {
 
                             Log.d(TAG, "checkRecordingStatus: serverStatus=$serverStatus, serverMeasureId=$serverMeasureId, localMeasureId=$localMeasureId")
 
-                            // If measureRecordId changed → different session, treat as NOT_MEASURING
-                            val isNewSession = serverStatus
-                                && serverMeasureId != null
-                                && localMeasureId != null
-                                && serverMeasureId != localMeasureId
-
-                            if (isNewSession) {
-                                Log.w(TAG, "measureRecordId changed ($localMeasureId → $serverMeasureId), treating as NOT_MEASURING")
-                                uiState = uiState.copy(isMeasuring = false)
-                                tokenManager.isMeasuring = false
-                                // Restore old ID so subsequent polling calls keep detecting the mismatch
-                                // and keep the Tag button locked until user logs out and re-logs in.
-                                tokenManager.measureRecordId = localMeasureId
-                            } else if (uiState.isMeasuring != serverStatus) {
-                                Log.d(TAG, "Recording status sync: local=${uiState.isMeasuring} -> server=$serverStatus")
-                                uiState = uiState.copy(isMeasuring = serverStatus)
-                                tokenManager.isMeasuring = serverStatus
+                            // If server says we are measuring, trust the server and sync the state/ID
+                            if (serverStatus) {
+                                if (serverMeasureId != localMeasureId) {
+                                    Log.i(TAG, "Syncing measureRecordId from server: $localMeasureId -> $serverMeasureId")
+                                    tokenManager.measureRecordId = serverMeasureId
+                                }
+                                if (!uiState.isMeasuring) {
+                                    Log.d(TAG, "Enabling tag button (serverStatus=true)")
+                                    uiState = uiState.copy(isMeasuring = true)
+                                    tokenManager.isMeasuring = true
+                                }
+                            } else {
+                                // Server says not measuring (e.g. ended)
+                                if (uiState.isMeasuring) {
+                                    Log.d(TAG, "Disabling tag button (serverStatus=false)")
+                                    uiState = uiState.copy(isMeasuring = false)
+                                    tokenManager.isMeasuring = false
+                                }
                             }
                         }
                     } else {
