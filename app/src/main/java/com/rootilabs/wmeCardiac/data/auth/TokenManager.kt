@@ -93,11 +93,11 @@ class TokenManager(private val context: Context) {
         }
 
     fun clearAll() {
-        val deviceId = prefs.getString(KEY_DEVICE_ID, null)
+        val deviceId = prefs.getString(KEY_PHONE_ID, null)
         val pushToken = prefs.getString("push_token", null)
         prefs.edit().clear().apply()
         if (deviceId != null) {
-            prefs.edit().putString(KEY_DEVICE_ID, deviceId).apply()
+            prefs.edit().putString(KEY_PHONE_ID, deviceId).apply()
         }
         if (pushToken != null) {
             prefs.edit().putString("push_token", pushToken).apply()
