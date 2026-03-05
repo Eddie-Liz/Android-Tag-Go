@@ -195,8 +195,12 @@ class LoginViewModel : ViewModel() {
             }
 
             // Successful Login
-            ServiceLocator.tokenManager.lastLoggedOutMeasureId = null
-            Log.d(TAG, "=== Login Success === measureRecordId=${ServiceLocator.tokenManager.measureRecordId}")
+            val tokenManager = ServiceLocator.tokenManager
+            tokenManager.institutionId = institutionId
+            tokenManager.patientId = patientId
+            tokenManager.lastLoggedOutMeasureId = null
+            
+            Log.d(TAG, "=== Login Success === institutionId=$institutionId, patientId=$patientId, measureRecordId=${tokenManager.measureRecordId}")
             uiState = uiState.copy(isLoading = false, loginSuccess = true)
         } catch (e: Throwable) {
             Log.e(TAG, "FATAL CRASH during login flow", e)
