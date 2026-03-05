@@ -101,12 +101,7 @@ class RootiCareRepository(
             if (response.isSuccessful) {
                 val body = response.body()
                 Log.d(TAG, "getCurrentMeasurement success: $body")
-                body?.let {
-                    Log.d(TAG, "measureRecordId from server: ${it.measureRecordId}")
-                    tokenManager.measureRecordId = it.measureRecordId
-                    tokenManager.serverDeviceId = it.deviceId
-                    Result.success(it)
-                } ?: Result.success(null)
+                Result.success(body)
             } else if (response.code() == 404) {
                 Log.d(TAG, "getCurrentMeasurement 404: No active measurement found")
                 Result.success(null)

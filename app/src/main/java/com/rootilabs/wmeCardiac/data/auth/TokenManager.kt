@@ -18,7 +18,12 @@ class TokenManager(private val context: Context) {
         private const val KEY_IS_LOGGED_IN = "is_logged_in"
         private const val KEY_LOGIN_TIME = "login_time"
         private const val KEY_IS_MEASURING = "is_measuring"
+        private const val KEY_LAST_LOGGED_OUT_ID = "last_logged_out_id"
     }
+
+    var lastLoggedOutMeasureId: String?
+        get() = prefs.getString(KEY_LAST_LOGGED_OUT_ID, null)
+        set(value) = prefs.edit().putString(KEY_LAST_LOGGED_OUT_ID, value).apply()
 
     var serverDeviceId: String?
         get() = prefs.getString(KEY_SERVER_DEVICE_ID, null)
@@ -93,14 +98,20 @@ class TokenManager(private val context: Context) {
         }
 
     fun clearAll() {
-        val deviceId = prefs.getString(KEY_PHONE_ID, null)
+        val phoneId = prefs.getString(KEY_PHONE_ID, null)
         val pushToken = prefs.getString("push_token", null)
+        val lastLoggedOutId = prefs.getString(KEY_LAST_LOGGED_OUT_ID, null)
+        
         prefs.edit().clear().apply()
-        if (deviceId != null) {
-            prefs.edit().putString(KEY_PHONE_ID, deviceId).apply()
+        
+        if (phoneId != null) {
+            prefs.edit().putString(KEY_PHONE_ID, phoneId).apply()
         }
         if (pushToken != null) {
             prefs.edit().putString("push_token", pushToken).apply()
+        }
+        if (lastLoggedOutId != null) {
+            prefs.edit().putString(KEY_LAST_LOGGED_OUT_ID, lastLoggedOutId).apply()
         }
     }
 }

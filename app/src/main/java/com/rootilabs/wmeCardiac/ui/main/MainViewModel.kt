@@ -89,7 +89,12 @@ class MainViewModel : ViewModel() {
     private var isSyncing = false
 
     init {
-        Log.d(TAG, "MainViewModel init: isMeasuring=${tokenManager.isMeasuring}, isLoggedIn=${tokenManager.isLoggedIn}, measureRecordId=${tokenManager.measureRecordId}")
+        // Cancel any pending background logout tasks to prevent "ghost logout"
+        // after app swipe-away and reopen.
+        androidx.work.WorkManager.getInstance(ServiceLocator.appContext)
+            .cancelAllWorkByTag("LogoutWorker")
+
+        Log.d(TAG, "MainViewModel Init: isLoggedIn=${tokenManager.isLoggedIn}, isMeasuring=${uiState.isMeasuring}, measureRecordId=${tokenManager.measureRecordId}")
         loadEventTags()
         checkRecordingStatus()
     }
@@ -338,6 +343,11 @@ class MainViewModel : ViewModel() {
             try {
                 uiState = uiState.copy(isLoading = true)
                 Log.d(TAG, "=== Logout Start ===")
+
+                // Safety Net: Save active measureId before clearing, 
+                // in case the server unsubscribe fails and we need to "repair" later.
+                tokenManager.lastLoggedOutMeasureId = tokenManager.measureRecordId
+                Log.d(TAG, "Saved lastLoggedOutMeasureId: ${tokenManager.lastLoggedOutMeasureId}")
 
                 // Refresh token before unsubscribe
                 try {

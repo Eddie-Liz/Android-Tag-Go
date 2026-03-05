@@ -81,34 +81,32 @@ class LoginViewModel : ViewModel() {
             Log.d(TAG, "Step 2 authPatient: success=${authResult.isSuccess}")
 
             // 409 = some device/session is already subscribed
-            // Check deviceId to distinguish between "same phone (reinstall)" and "another phone"
+            // Strict Policy: Only allow auto-revoke if we are SURE it's the same session on this device.
             if (authResult.isFailure && authResult.exceptionOrNull()?.message == "ALREADY_SUBSCRIBED") {
-                val localDeviceId = ServiceLocator.tokenManager.deviceId
+                val tokenManager = ServiceLocator.tokenManager
+                val localMeasureId = tokenManager.measureRecordId
+                val lastLoggedOutId = tokenManager.lastLoggedOutMeasureId
+                
                 val measureCheck = repository.getCurrentMeasurement(institutionId, patientId)
                 val measureInfo = measureCheck.getOrNull()
-                val serverDeviceId = measureInfo?.deviceId
+                val serverMeasureId = measureInfo?.measureRecordId
                 
-                Log.w(TAG, "409 check: localDeviceId=$localDeviceId, serverDeviceId=$serverDeviceId")
+                Log.w(TAG, "409 check: localMeasureId=$localMeasureId, lastLoggedOutId=$lastLoggedOutId, serverMeasureId=$serverMeasureId")
 
-                // We only block if the server records a 'PHONE_...' ID that is NOT ours.
-                // If it's a hardware MAC (no 'PHONE_') or null, we allow the current phone to "claim" the session.
-                val isConflictWithAnotherPhone = serverDeviceId != null && 
-                                                serverDeviceId.startsWith("PHONE_") && 
-                                                serverDeviceId != localDeviceId
+                // Strict check: Only same session ID (current or recently logged out) allows auto-repair. 
+                // This prevents multi-phone bypass while allowing repair if a previous same-phone logout failed to sync to server.
+                val isStaleSessionOnSameDevice = (localMeasureId != null && localMeasureId == serverMeasureId) ||
+                                                (lastLoggedOutId != null && lastLoggedOutId == serverMeasureId)
 
-                if (isConflictWithAnotherPhone) {
-                    Log.w(TAG, "Genuinely another phone is active ($serverDeviceId) -> blocking login")
-                    uiState = uiState.copy(isLoading = false, error = "ALREADY_SUBSCRIBED")
-                    return
-                } else {
-                    // It's either:
-                    // 1. Same phone (PHONE_... matches)
-                    // 2. Hardware ID only (MAC address, not a phone ID)
-                    // 3. No ID at all
-                    Log.w(TAG, "No conflict with other phones (same phone or hardware-only session) -> repairing session")
+                if (isStaleSessionOnSameDevice) {
+                    Log.w(TAG, "Stale or recently logged-out session on same device -> repairing")
                     repository.revokeOldSession(institutionId, patientId)
                     authResult = repository.authPatient(institutionId, patientId)
                     Log.d(TAG, "Step 2 retry authPatient: success=${authResult.isSuccess}")
+                } else {
+                    Log.w(TAG, "Conflicting session or new install -> blocking login per strict 409 policy")
+                    uiState = uiState.copy(isLoading = false, error = "ALREADY_SUBSCRIBED")
+                    return
                 }
             }
 
@@ -162,6 +160,10 @@ class LoginViewModel : ViewModel() {
 
             // Step 4: Check measureRecordId - same session or new session?
             val newMeasureId = measurementInfo.measureRecordId
+            
+            // Explicitly sync the ID only AFTER we are past the 409 check and proceeding with login
+            ServiceLocator.tokenManager.measureRecordId = newMeasureId
+            
             Log.d(TAG, "Step 4 measureRecordId check: old=$oldMeasureId, new=$newMeasureId")
 
             if (oldMeasureId != null && newMeasureId != null && oldMeasureId != newMeasureId) {
@@ -188,6 +190,8 @@ class LoginViewModel : ViewModel() {
                 }
             }
 
+            // Successful Login
+            ServiceLocator.tokenManager.lastLoggedOutMeasureId = null
             Log.d(TAG, "=== Login Success === measureRecordId=${ServiceLocator.tokenManager.measureRecordId}")
             uiState = uiState.copy(isLoading = false, loginSuccess = true)
         } catch (e: Throwable) {
