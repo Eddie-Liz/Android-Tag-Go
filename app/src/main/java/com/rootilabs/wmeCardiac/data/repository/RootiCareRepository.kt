@@ -218,24 +218,21 @@ class RootiCareRepository(
         }
 
         return try {
-            val pushToken = tokenManager.pushToken
-            val request = UnsubscribeRequest(deviceToken = pushToken)
+            Log.d(TAG, "Logout: POST .../unsubscribe inst=$institutionId, patient=$patientId")
 
-            Log.d(TAG, "Attempting Logout (Primary Strategy) - POST .../unsubscribe: inst=$institutionId, patient=$patientId")
-            
-            // Execute network call with timeout or just catch the connectivity exception
             try {
-                val response = rootiCareApi.unsubscribePatientWithSuffix(institutionId, patientId, request)
-                Log.d(TAG, "Logout result code: ${response.code()}")
-                
-                if (!response.isSuccessful && response.code() != 204) {
-                    Log.d(TAG, "Primary strategy failed (${response.code()}), trying fallback Strategy C (POST base path)")
-                    val fallbackResponse = rootiCareApi.unsubscribePatient(institutionId, patientId)
-                    Log.d(TAG, "Fallback Strategy result: ${fallbackResponse.code()}")
+                val response = rootiCareApi.unsubscribePatient(institutionId, patientId)
+                val responseBody = response.body()?.string()
+                Log.d(TAG, "Logout response: code=${response.code()}, body=$responseBody")
+
+                if (response.isSuccessful) {
+                    Log.d(TAG, "Logout success")
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Log.w(TAG, "Logout server error: ${response.code()} - $errorBody")
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "Logout: Network error (${e.javaClass.simpleName}: ${e.message}). Scheduling background cleanup.")
-                // Schedule WorkManager to clean up when network is back
                 try {
                     val workRequest = OneTimeWorkRequestBuilder<com.rootilabs.wmeCardiac.data.worker.LogoutWorker>()
                         .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())

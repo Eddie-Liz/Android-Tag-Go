@@ -39,21 +39,12 @@ interface RootiCareApi {
         @Query("pageNumber") pageNumber: Int
     ): Response<EventTagHistoryResponse>
 
-    // API #6: Unsubscribe Patient (Logout)
-    // Confirmed correct method: POST on the base patient path
-    @POST("/oauth/vendors/{institutionId}/patients/{patientId}")
+    // API #6: Unsubscribe Patient (Logout) - no body needed per API doc
+    @POST("/oauth/vendors/{institutionId}/patients/{patientId}/unsubscribe")
     suspend fun unsubscribePatient(
         @Path("institutionId") institutionId: String,
         @Path("patientId") patientId: String
     ): Response<ResponseBody>
-
-    // Fallback: POST .../unsubscribe (Standard in some docs)
-    @POST("/oauth/vendors/{institutionId}/patients/{patientId}/unsubscribe")
-    suspend fun unsubscribePatientWithSuffix(
-        @Path("institutionId") institutionId: String,
-        @Path("patientId") patientId: String,
-        @Body body: UnsubscribeRequest
-    ): Response<UnsubscribeResponse>
 
     // API #7: Add Virtual Event Tags
     @POST("/api/v1/institutions/{institutionId}/patients/{patientId}/measures/{measureId}/virtualTags")
