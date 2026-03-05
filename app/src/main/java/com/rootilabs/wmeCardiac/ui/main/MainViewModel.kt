@@ -173,6 +173,7 @@ class MainViewModel : ViewModel() {
     private var isCheckingStatus = false
 
     fun checkRecordingStatus() {
+        Log.d(TAG, "checkRecordingStatus: starting refresh...")
         if (isCheckingStatus) return
         
         viewModelScope.launch {

@@ -56,7 +56,7 @@ import androidx.compose.animation.slideOutVertically
 import kotlinx.coroutines.launch
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalContext
+import android.util.Log
 import android.os.Vibrator
 import android.os.VibrationEffect
 import android.os.Build
@@ -86,6 +86,7 @@ fun MainScreen(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
+                Log.d("MainScreen", "ON_RESUME: Refreshing recording status...")
                 viewModel.checkRecordingStatus()
             }
         }
