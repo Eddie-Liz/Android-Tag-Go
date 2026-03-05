@@ -17,12 +17,14 @@ data class MeasurementInfo(
         // If expectedEndTime is small (e.g. 10 digits), treat as seconds and convert to millis
         val endTimeMillis = if (et > 0 && et < 100000000000L) et * 1000 else et
         
+        // Add 2-minute buffer for clock drift
+        val bufferMillis = 120_000L
         val isOk = s == STATE_MEASURING
             && et != 0L
-            && now < endTimeMillis
+            && now < (endTimeMillis + bufferMillis)
         
         if (!isOk) {
-            android.util.Log.w("MeasurementInfo", "isMeasuring=false: state=$s, endTime=$endTimeMillis, now=$now")
+            android.util.Log.w("MeasurementInfo", "isMeasuring=false: state=$s, endTime=$endTimeMillis, now=$now, buffer=$bufferMillis")
         }
         return isOk
     }

@@ -236,6 +236,7 @@ class RootiCareRepository(
                 try {
                     val workRequest = OneTimeWorkRequestBuilder<com.rootilabs.wmeCardiac.data.worker.LogoutWorker>()
                         .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                        .addTag("LogoutWorker")
                         .setInputData(workDataOf("institutionId" to institutionId, "patientId" to patientId))
                         .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, java.util.concurrent.TimeUnit.SECONDS)
                         .build()

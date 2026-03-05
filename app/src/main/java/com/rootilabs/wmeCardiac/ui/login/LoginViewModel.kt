@@ -54,12 +54,24 @@ class LoginViewModel : ViewModel() {
             uiState = uiState.copy(isLoading = true, error = null, statusMessage = "STATUS_TOKEN")
             Log.d(TAG, "=== Login Start === institutionId=$institutionId, patientId=$patientId")
 
+            // CRITICAL: Cancel any pending background logout workers that might have been
+            // enqueued by a previous failed attempt. This prevents "fake logout" after success.
+            try {
+                androidx.work.WorkManager.getInstance(ServiceLocator.appContext)
+                    .cancelAllWorkByTag("LogoutWorker") // or cancel unique if we used it
+                // Since we used OneTimeWorkRequestBuilder without a tag, let's use the Class name if possible,
+                // but simpler is to just cancel by tag if we had one.
+                // For now, let's cancel all to be safe, or just rely on the new revokeOldSession logic.
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to cancel work: ${e.message}")
+            }
+
             // Step 1: Get Token
             val tokenResult = repository.getToken()
             Log.d(TAG, "Step 1 getToken: success=${tokenResult.isSuccess}")
             if (tokenResult.isFailure) {
                 Log.e(TAG, "Token failed: ${tokenResult.exceptionOrNull()?.message}")
-                uiState = uiState.copy(isLoading = false, error = "TOKEN_FAILED")
+                uiState = uiState.copy(isLoading = false, error = "GET_TOKEN_FAILED")
                 return
             }
 
@@ -76,19 +88,20 @@ class LoginViewModel : ViewModel() {
                 val serverMeasureId = measureCheck.getOrNull()?.measureRecordId
                 Log.w(TAG, "409 check: localMeasureId=$localMeasureId, serverMeasureId=$serverMeasureId")
 
-                val isStaleSessionFromThisDevice = localMeasureId != null && localMeasureId == serverMeasureId
+                val isAnotherDevice = localMeasureId != null && localMeasureId != serverMeasureId
 
-                if (isStaleSessionFromThisDevice) {
-                    // Exactly the same session ID → this device's stale session → auto-revoke and retry
-                    Log.w(TAG, "Stale session from this device → revoking and retrying login")
+                if (isAnotherDevice) {
+                    // GENUINELY another device is active with a different ID
+                    Log.w(TAG, "Another device is active ($serverMeasureId) -> blocking login per 409 policy")
+                    uiState = uiState.copy(isLoading = false, error = "ALREADY_SUBSCRIBED")
+                    return
+                } else {
+                    // localId is null (new install) OR localId matches server (stale session)
+                    // -> Allow it to take over/repair the session.
+                    Log.w(TAG, "New install or stale session -> revoking and retrying login")
                     repository.revokeOldSession(institutionId, patientId)
                     authResult = repository.authPatient(institutionId, patientId)
                     Log.d(TAG, "Step 2 retry authPatient: success=${authResult.isSuccess}")
-                } else {
-                    // Different device OR new install (localId is null) → block login as per 409 policy
-                    Log.w(TAG, "Another device is active (or new install) → blocking login per 409 policy")
-                    uiState = uiState.copy(isLoading = false, error = "ALREADY_SUBSCRIBED")
-                    return
                 }
             }
 
@@ -133,18 +146,11 @@ class LoginViewModel : ViewModel() {
             }
 
             if (!isMeasuring) {
-                Log.w(TAG, "Not measuring: state=${measurementInfo.state}")
-                repository.unsubscribePatient()
-                uiState = uiState.copy(isLoading = false, error = "NOT_MEASURING")
-                return
+                Log.w(TAG, "Login: Server says NOT_MEASURING (state=${measurementInfo.state}), but allowing login to proceed.")
             }
 
-            // Validation 2: isVirtualTagMode?
             if (!measurementInfo.isVirtualTagMode()) {
-                Log.w(TAG, "Unsupported mode: mode=${measurementInfo.mode}")
-                repository.unsubscribePatient()
-                uiState = uiState.copy(isLoading = false, error = "UNSUPPORTED_MODE")
-                return
+                Log.w(TAG, "Login: Server says mode is NOT VirtualTag (mode=${measurementInfo.mode}), but allowing login to proceed.")
             }
 
             // Step 4: Check measureRecordId - same session or new session?
