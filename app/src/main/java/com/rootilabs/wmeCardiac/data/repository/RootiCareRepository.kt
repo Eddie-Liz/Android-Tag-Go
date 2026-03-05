@@ -256,6 +256,23 @@ class RootiCareRepository(
         }
     }
 
+    /**
+     * Revoke an old/stale subscription during login 409 retry.
+     * Unlike unsubscribePatient(), this does NOT clear local data and does NOT enqueue LogoutWorker,
+     * so the ongoing login flow can continue safely.
+     */
+    suspend fun revokeOldSession(institutionId: String, patientId: String) {
+        Log.d(TAG, "revokeOldSession: inst=$institutionId, patient=$patientId")
+        try {
+            val response = rootiCareApi.unsubscribePatient(institutionId, patientId)
+            Log.d(TAG, "revokeOldSession response: code=${response.code()}")
+        } catch (e: Exception) {
+            // Best-effort only — don't schedule LogoutWorker here
+            Log.w(TAG, "revokeOldSession network error (best-effort): ${e.message}")
+        }
+    }
+
+
     // ---- API #7: Upload Virtual Event Tags ----
     suspend fun uploadVirtualEventTags(tags: List<EventTagDbEntity>): Result<AddVirtualTagsResponse> {
         val institutionId = tokenManager.institutionId ?: ""

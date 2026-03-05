@@ -84,11 +84,12 @@ class LoginViewModel : ViewModel() {
                     uiState = uiState.copy(isLoading = false, error = "ALREADY_SUBSCRIBED")
                     return
                 } else {
-                    // null local (new device) OR same measureRecordId (stale session) → clear and retry
-                    Log.w(TAG, "New device or stale session → unsubscribing and retrying login")
-                    repository.unsubscribePatient(institutionId, patientId)
-                    // unsubscribePatient clears local data (including token), so refresh token before retrying
-                    repository.getToken()
+                    // null local (new device) OR same measureRecordId (stale session) → revoke and retry
+                    // Use revokeOldSession() instead of unsubscribePatient() to avoid:
+                    //   1. clearLocalData() wiping the current token
+                    //   2. LogoutWorker being enqueued and running AFTER successful login
+                    Log.w(TAG, "New device or stale session → revoking old session and retrying login")
+                    repository.revokeOldSession(institutionId, patientId)
                     authResult = repository.authPatient(institutionId, patientId)
                     Log.d(TAG, "Step 2 retry authPatient: success=${authResult.isSuccess}")
                 }
