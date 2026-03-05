@@ -65,8 +65,31 @@ class LoginViewModel : ViewModel() {
 
             // Step 2: Auth Patient
             uiState = uiState.copy(statusMessage = "STATUS_AUTH")
-            val authResult = repository.authPatient(institutionId, patientId)
+            var authResult = repository.authPatient(institutionId, patientId)
             Log.d(TAG, "Step 2 authPatient: success=${authResult.isSuccess}")
+
+            // 409 = some device is already subscribed
+            // Check measureRecordId to determine if it's OUR stale session or another device
+            if (authResult.isFailure && authResult.exceptionOrNull()?.message == "ALREADY_SUBSCRIBED") {
+                val localMeasureId = ServiceLocator.tokenManager.measureRecordId
+                val measureCheck = repository.getCurrentMeasurement(institutionId, patientId)
+                val serverMeasureId = measureCheck.getOrNull()?.measureRecordId
+                Log.w(TAG, "409 check: localMeasureId=$localMeasureId, serverMeasureId=$serverMeasureId")
+
+                if (localMeasureId != null && localMeasureId == serverMeasureId) {
+                    // Same measureRecordId → this device's stale session → unsubscribe and retry
+                    Log.w(TAG, "Same measureRecordId → stale session from this device, auto-unsubscribing and retrying")
+                    repository.unsubscribePatient(institutionId, patientId)
+                    authResult = repository.authPatient(institutionId, patientId)
+                    Log.d(TAG, "Step 2 retry authPatient: success=${authResult.isSuccess}")
+                } else {
+                    // Different measureRecordId (or no local) → genuinely another device
+                    Log.w(TAG, "Different measureRecordId → another device is logged in, blocking login")
+                    uiState = uiState.copy(isLoading = false, error = "ALREADY_SUBSCRIBED")
+                    return
+                }
+            }
+
             if (authResult.isFailure) {
                 val cause = authResult.exceptionOrNull()?.message ?: ""
                 Log.e(TAG, "authPatient failed: $cause")
