@@ -203,39 +203,59 @@ class MainViewModel : ViewModel() {
                         } else {
                             val serverStatus = info.isMeasuring()
                             val serverMeasureId = info.measureRecordId
+                            val serverHardwareId = info.deviceId
+                            val localHardwareId = tokenManager.serverDeviceId
 
                             Log.d(TAG, "checkRecordingStatus: serverStatus=$serverStatus, serverMeasureId=$serverMeasureId, localMeasureId=$localMeasureId")
 
-                            // Always sync ID if the Session ID has changed,
-                            // regardless of whether the session is currently active or ended.
-                            // We DO NOT clear local event tags here to prevent UI flashes or data loss 
-                            // if the session reconnects right after a backend refresh (e.g. rootirx re-recording).
-                            if (serverMeasureId != null && serverMeasureId != localMeasureId) {
-                                Log.d(TAG, "Session ID changed ($localMeasureId -> $serverMeasureId), syncing ID without clearing tags")
-                                tokenManager.measureRecordId = serverMeasureId
-                                loadEventTags()
-                            } else if (serverMeasureId == null && localMeasureId != null) {
-                                // Server has no session, but local has one -> also an orphan
-                                Log.w(TAG, "No active session on server, syncing ID without clearing tags")
-                                tokenManager.measureRecordId = null
-                                loadEventTags()
-                            }
+                            // If another device started recording the same patient, the server's actively recording session
+                            // will belong to a DIFFERENT hardware device than what this phone was paired with.
+                            // If this happens, we must NOT adopt the new session ID. Doing so would cause this phone 
+                            // to upload tags to the other device's session and inadvertently overwrite the server's deviceId!
+                            val isDifferentHardware = serverHardwareId != null && localHardwareId != null && serverHardwareId != localHardwareId
 
-                            // Update measuring state
-                            if (serverStatus) {
-                                if (!uiState.isMeasuring) {
-                                    Log.d(TAG, "Enabling tag button (serverStatus=true)")
-                                    uiState = uiState.copy(isMeasuring = true)
-                                    tokenManager.isMeasuring = true
-                                }
-                            } else {
-                                // Server says not measuring (e.g. ended)
+                            if (isDifferentHardware) {
+                                Log.w(TAG, "checkRecordingStatus: Server session active on DIFFERENT hardware ($serverHardwareId, expecting $localHardwareId). Ignoring new session ID to prevent mix-ups.")
+                                
+                                // Since our session was superseded by another device, we consider ourselves NOT measuring
                                 if (uiState.isMeasuring) {
-                                    Log.d(TAG, "Disabling tag button (serverStatus=false)")
                                     uiState = uiState.copy(isMeasuring = false)
                                     tokenManager.isMeasuring = false
                                 }
+                                // We purposely DO NOT update tokenManager.measureRecordId or sync tags.
+                            } else {
+                                // Always sync ID if the Session ID has changed,
+                                // regardless of whether the session is currently active or ended.
+                                // We DO NOT clear local event tags here to prevent UI flashes or data loss 
+                                // if the session reconnects right after a backend refresh (e.g. rootirx re-recording).
+                                if (serverMeasureId != null && serverMeasureId != localMeasureId) {
+                                    Log.d(TAG, "Session ID changed ($localMeasureId -> $serverMeasureId), syncing ID without clearing tags")
+                                    tokenManager.measureRecordId = serverMeasureId
+                                    loadEventTags()
+                                } else if (serverMeasureId == null && localMeasureId != null) {
+                                    // Server has no session, but local has one -> also an orphan
+                                    Log.w(TAG, "No active session on server, syncing ID without clearing tags")
+                                    tokenManager.measureRecordId = null
+                                    loadEventTags()
+                                }
+    
+                                // Update measuring state
+                                if (serverStatus) {
+                                    if (!uiState.isMeasuring) {
+                                        Log.d(TAG, "Enabling tag button (serverStatus=true)")
+                                        uiState = uiState.copy(isMeasuring = true)
+                                        tokenManager.isMeasuring = true
+                                    }
+                                } else {
+                                    // Server says not measuring (e.g. ended)
+                                    if (uiState.isMeasuring) {
+                                        Log.d(TAG, "Disabling tag button (serverStatus=false)")
+                                        uiState = uiState.copy(isMeasuring = false)
+                                        tokenManager.isMeasuring = false
+                                    }
+                                }
                             }
+                            
                             // State is verified after successful API return
                             uiState = uiState.copy(isStatusVerified = true)
                         }

@@ -162,13 +162,8 @@ class LoginViewModel : ViewModel() {
 
             ServiceLocator.tokenManager.isMeasuring = isMeasuring
             if (measurementInfo.deviceId != null) {
-                val currentSavedId = ServiceLocator.tokenManager.serverDeviceId
-                if (currentSavedId == null) {
-                    ServiceLocator.tokenManager.serverDeviceId = measurementInfo.deviceId
-                    Log.d(TAG, "Server hardware deviceId (Rx) saved (initial login): ${measurementInfo.deviceId}")
-                } else {
-                    Log.d(TAG, "Maintaining initial deviceId: $currentSavedId (ignoring new server-reported ID: ${measurementInfo.deviceId})")
-                }
+                ServiceLocator.tokenManager.serverDeviceId = measurementInfo.deviceId
+                Log.d(TAG, "Server hardware deviceId (Rx) saved at login: ${measurementInfo.deviceId}")
             }
 
             if (!isMeasuring) {
