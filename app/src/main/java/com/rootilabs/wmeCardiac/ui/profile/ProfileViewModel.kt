@@ -40,6 +40,11 @@ class ProfileViewModel : ViewModel() {
         viewModelScope.launch {
             uiState = uiState.copy(isLoading = true, error = null)
             try {
+                // Safety Net: Save active measureId before clearing, 
+                // in case the server unsubscribe fails and we need to "repair" later.
+                ServiceLocator.tokenManager.lastLoggedOutMeasureId = ServiceLocator.tokenManager.measureRecordId
+                android.util.Log.d("ProfileViewModel", "Saved lastLoggedOutMeasureId: ${ServiceLocator.tokenManager.lastLoggedOutMeasureId}")
+
                 val result = repository.unsubscribePatient()
                 if (result.isSuccess) {
                     uiState = uiState.copy(isLoading = false, logoutSuccess = true)

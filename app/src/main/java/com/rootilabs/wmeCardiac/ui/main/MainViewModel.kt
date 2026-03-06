@@ -206,37 +206,31 @@ class MainViewModel : ViewModel() {
 
                             Log.d(TAG, "checkRecordingStatus: serverStatus=$serverStatus, serverMeasureId=$serverMeasureId, localMeasureId=$localMeasureId")
 
-                            // Always sync ID and clear data if the Session ID has changed,
-                            // regardless of whether the session is currently active or ended.
-                            // This ensures local history doesn't show "orphan" tags from a different session.
-                            if (serverMeasureId != null && serverMeasureId != localMeasureId) {
-                                Log.d(TAG, "Session ID changed ($localMeasureId -> $serverMeasureId), clearing local tags")
-                                repository.clearLocalEventTags()
-                                tokenManager.measureRecordId = serverMeasureId
-                                uiState = uiState.copy(eventTags = emptyList())
-                                loadEventTags()
-                            } else if (serverMeasureId == null && localMeasureId != null) {
-                                // Server has no session, but local has one -> also an orphan
-                                Log.w(TAG, "No active session on server, clearing orphan local tags")
-                                repository.clearLocalEventTags()
-                                tokenManager.measureRecordId = null
-                                uiState = uiState.copy(eventTags = emptyList())
-                                loadEventTags()
-                            }
+                            val isSameSession = (serverMeasureId == localMeasureId)
 
-                            // Update measuring state
-                            if (serverStatus) {
-                                if (!uiState.isMeasuring) {
-                                    Log.d(TAG, "Enabling tag button (serverStatus=true)")
-                                    uiState = uiState.copy(isMeasuring = true)
-                                    tokenManager.isMeasuring = true
-                                }
-                            } else {
-                                // Server says not measuring (e.g. ended)
+                            // If session ID changed or session ended, do NOT update local session ID and do NOT clear tags.
+                            // This effectively freezes the old session's history and disables the tag button.
+                            // The user MUST logout and login again to access the new session.
+                            if (!isSameSession) {
+                                Log.w(TAG, "Session ID mismatch or ended (local=\$localMeasureId, server=\$serverMeasureId). Freezing old session state.")
                                 if (uiState.isMeasuring) {
-                                    Log.d(TAG, "Disabling tag button (serverStatus=false)")
                                     uiState = uiState.copy(isMeasuring = false)
                                     tokenManager.isMeasuring = false
+                                }
+                            } else {
+                                // Session matches, update measuring state according to server
+                                if (serverStatus) {
+                                    if (!uiState.isMeasuring) {
+                                        Log.d(TAG, "Enabling tag button (serverStatus=true)")
+                                        uiState = uiState.copy(isMeasuring = true)
+                                        tokenManager.isMeasuring = true
+                                    }
+                                } else {
+                                    if (uiState.isMeasuring) {
+                                        Log.d(TAG, "Disabling tag button (serverStatus=false)")
+                                        uiState = uiState.copy(isMeasuring = false)
+                                        tokenManager.isMeasuring = false
+                                    }
                                 }
                             }
                             // State is verified after successful API return

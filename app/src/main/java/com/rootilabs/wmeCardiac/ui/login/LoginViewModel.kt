@@ -43,8 +43,9 @@ class LoginViewModel : ViewModel() {
             return
         }
         viewModelScope.launch {
-            // Switch server before login
+            // Switch server before login and save it
             ServiceLocator.reinitWithBaseUrl(selectedServer.url)
+            ServiceLocator.tokenManager.serverUrl = selectedServer.url
             performLogin()
         }
     }
@@ -100,18 +101,17 @@ class LoginViewModel : ViewModel() {
                 
                 Log.w(TAG, "409 check: localMeasureId=$localMeasureId, lastLoggedOutId=$lastLoggedOutId, serverMeasureId=$serverMeasureId")
 
-                // Strict check: Only same session ID (current or recently logged out) allows auto-repair. 
-                // This prevents multi-phone bypass while allowing repair if a previous same-phone logout failed to sync to server.
-                val isStaleSessionOnSameDevice = (localMeasureId != null && localMeasureId == serverMeasureId) ||
-                                                (lastLoggedOutId != null && lastLoggedOutId == serverMeasureId)
-
-                if (isStaleSessionOnSameDevice) {
-                    Log.w(TAG, "Stale or recently logged-out session on same device -> repairing")
-                    repository.revokeOldSession(institutionId, patientId)
-                    authResult = repository.authPatient(institutionId, patientId)
-                    Log.d(TAG, "Step 2 retry authPatient: success=${authResult.isSuccess}")
-                } else {
-                    Log.w(TAG, "Conflicting session or new install -> blocking login per strict 409 policy")
+                // We previously restricted this to the same device, but that caused permanent lockouts 
+                // if the user performed an offline logout or the backend generated a new session ID.
+                // Since this app requires valid credentials to attempt login, we will simply allow 
+                // the login attempt to seize/revoke the active session unconditionally.
+                Log.w(TAG, "409 check: Attempting to repair session by revoking the existing one")
+                repository.revokeOldSession(institutionId, patientId)
+                authResult = repository.authPatient(institutionId, patientId)
+                Log.d(TAG, "Step 2 retry authPatient: success=${authResult.isSuccess}")
+                
+                if (authResult.isFailure && authResult.exceptionOrNull()?.message == "ALREADY_SUBSCRIBED") {
+                    Log.w(TAG, "Revoke failed or conflicting session -> blocking login")
                     uiState = uiState.copy(isLoading = false, error = "ALREADY_SUBSCRIBED")
                     return
                 }
@@ -167,17 +167,15 @@ class LoginViewModel : ViewModel() {
                 return
             }
 
-            // Step 4: Check measureRecordId - same session or new session?
+            // Step 4: Check measureRecordId
             val newMeasureId = measurementInfo.measureRecordId
             
             Log.d(TAG, "Step 4 measureRecordId check: old=$oldMeasureId, new=$newMeasureId")
 
-            if (newMeasureId != oldMeasureId) {
-                // Different measureRecordId (including transition from null to non-null) 
-                // → definitely a new session for this device
-                Log.w(TAG, "New session detected ($oldMeasureId -> $newMeasureId), clearing local event tags")
-                repository.clearLocalEventTags()
-            }
+            // Always clear local event tags on a new login, 
+            // to ensure no old data remains regardless of session ID status.
+            Log.w(TAG, "New login initiated, clearing local event tags explicitly")
+            repository.clearLocalEventTags()
             
             // Sync the ID
             ServiceLocator.tokenManager.measureRecordId = newMeasureId

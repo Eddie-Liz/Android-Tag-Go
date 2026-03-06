@@ -144,9 +144,8 @@ fun ProfileScreen(
                         Text(text = uiState.error!!, color = Color.Red, fontSize = 14.sp)
                     }
 
-                    Spacer(modifier = Modifier.height(60.dp))
                     Text(
-                        text = stringResource(id = R.string.version, "2.0.35"),
+                        text = stringResource(id = R.string.version, tokenManager.appVersion),
                         color = Color.Gray,
                         fontSize = 14.sp,
                         modifier = Modifier.padding(bottom = 24.dp)

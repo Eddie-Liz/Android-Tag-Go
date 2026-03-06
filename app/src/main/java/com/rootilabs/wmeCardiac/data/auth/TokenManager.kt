@@ -21,7 +21,12 @@ class TokenManager(private val context: Context) {
         private const val KEY_LOGIN_TIME = "login_time"
         private const val KEY_IS_MEASURING = "is_measuring"
         private const val KEY_LAST_LOGGED_OUT_ID = "last_logged_out_id"
+        private const val KEY_SERVER_URL = "server_url"
     }
+
+    var serverUrl: String?
+        get() = prefs.getString(KEY_SERVER_URL, null)
+        set(value) = prefs.edit().putString(KEY_SERVER_URL, value).apply()
 
     var lastLoggedOutMeasureId: String?
         get() = prefs.getString(KEY_LAST_LOGGED_OUT_ID, null)
@@ -110,12 +115,14 @@ class TokenManager(private val context: Context) {
         val phoneId = prefs.getString(KEY_PHONE_ID, null)
         val pushToken = prefs.getString("push_token", null)
         val lastLoggedOutId = prefs.getString(KEY_LAST_LOGGED_OUT_ID, null)
+        val savedServerUrl = prefs.getString(KEY_SERVER_URL, null)
         
         // Single atomic-like transaction to clear and restore
         val editor = prefs.edit().clear()
         if (phoneId != null) editor.putString(KEY_PHONE_ID, phoneId)
         if (pushToken != null) editor.putString("push_token", pushToken)
         if (lastLoggedOutId != null) editor.putString(KEY_LAST_LOGGED_OUT_ID, lastLoggedOutId)
+        if (savedServerUrl != null) editor.putString(KEY_SERVER_URL, savedServerUrl)
         editor.commit() // Use commit() here for immediate persistence
     }
 }

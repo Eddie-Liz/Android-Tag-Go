@@ -18,8 +18,8 @@ android {
         applicationId = "com.rootilabs.wmeCardiac"
         minSdk = 24
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.0.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -33,19 +33,17 @@ android {
             firebaseAppDistribution {
                 artifactType = "APK"
                 releaseNotes = """
-                    [v1.0.3 Bug Fix / 修正說明]
-                    - EN: Fixed Tag button still enabled after recording session is deleted and recreated with same patient name.
-                    - CH: 修正錄製刪除後重新建立同名 session，Tag 按鈕仍可點擊的問題。
-                    - EN: Fixed measureRecordId comparison reading wrong value (after API overwrites it).
-                    - CH: 修正 measureRecordId 比對邏輯讀取到已被覆寫的新值，導致偵測失效。
-                    - EN: Tag button now defaults to disabled on app restart; only enabled after server confirms active session.
-                    - CH: App 重啟後 Tag 按鈕預設禁用，待 API 確認量測中才解鎖，消除重啟空窗期。
-                    - EN: Polling interval reduced from 10s to 3s for faster session change detection.
-                    - CH: 縮短狀態輪詢間隔（10 秒→3 秒），更即時偵測 session 狀態變化。
-                    - EN: Fixed duplicate upload race condition in tag confirmation flow.
-                    - CH: 修正 Tag 確認時雙重上傳的競態問題。
-                    - EN: HTTP 500 DuplicateKeyException now treated as already-synced to stop infinite retry.
-                    - CH: 伺服器回傳 500 重複鍵錯誤時，自動標記為已同步，停止無限重試。
+                    [v1.0.4 Bug Fix / 修正說明]
+                    - EN: Fixed permanent login lockout (409 Error) after an offline logout by unconditionally revoking old active sessions.
+                    - CH: 修正因無網路登出後，伺服器卡在登入狀態導致被永久鎖死（409錯誤）的問題。
+                    - EN: Fixed app switching to wrong server after restart by persisting the selected Server URL.
+                    - CH: 修正重新開啟 App 後，伺服器位置會跑掉變回預設的問題（新增伺服器 URL 紀錄機制）。
+                    - EN: Allowed forced offline logout and thorough local data wipe when the server is unreachable.
+                    - CH: 允許在無網路或伺服器異常時「強制登出」，並確實清空所有尚未上傳之標記資料。
+                    - EN: Enforced immediate lock of Tag button when session ends; requires manual relogin to start new session to prevent data bleed.
+                    - CH: 防止背景直接切換新量測紀錄。當紀錄結束時，Tag 按鈕會直接反灰凍結，使用者必須重新登入才能看到新局資料，確保新舊資料不互相污染。
+                    - EN: Sync appVersion text on Profile Screen dynamically with build config.
+                    - CH: 個人資料頁面的 App 版本號現在會自動同步最新版號。
                 """.trimIndent()
             }
         }

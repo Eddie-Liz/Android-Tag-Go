@@ -218,8 +218,9 @@ class RootiCareRepository(
             val response = try {
                 rootiCareApi.unsubscribePatient(institutionId, patientId)
             } catch (e: Exception) {
-                Log.e(TAG, "Logout network error: ${e.message}")
-                return Result.failure(Exception("網路連線失敗，請檢查網路後再試"))
+                Log.e(TAG, "Logout network error: ${e.message}. Forcing local logout.")
+                clearLocalData()
+                return Result.success(Unit)
             }
 
             val statusCode = response.code()
@@ -232,8 +233,9 @@ class RootiCareRepository(
                 Result.success(Unit)
             } else {
                 val errorMsg = response.errorBody()?.string() ?: "伺服器錯誤 ($statusCode)"
-                Log.w(TAG, "Logout server error: $statusCode - $errorMsg")
-                Result.failure(Exception(errorMsg))
+                Log.w(TAG, "Logout server error: $statusCode - $errorMsg. Forcing local logout.")
+                clearLocalData()
+                Result.success(Unit)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Logout critical error", e)

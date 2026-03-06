@@ -44,7 +44,8 @@ object ServiceLocator {
         _instance = this
         appContext = context.applicationContext
         tokenManager = TokenManager(appContext)
-        initApis(Constants.BASE_URL)
+        val savedUrl = tokenManager.serverUrl ?: Constants.BASE_URL
+        initApis(savedUrl)
         initDatabase()
     }
 
