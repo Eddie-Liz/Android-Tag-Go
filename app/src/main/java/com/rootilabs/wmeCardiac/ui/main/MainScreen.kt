@@ -370,7 +370,10 @@ fun MainScreen(
                             )
 
                             Text(
-                                text = if (uiState.isMeasuring) stringResource(id = R.string.tap_to_tag) else stringResource(id = R.string.no_recording),
+                                text = if (uiState.isStatusVerified && uiState.isMeasuring) 
+                                    stringResource(id = R.string.tap_to_tag) 
+                                else 
+                                    stringResource(id = R.string.no_recording),
                                 fontSize = 24.sp,
                                 color = Color(0xFF797979),
                                 fontWeight = FontWeight.ExtraBold,
@@ -379,7 +382,7 @@ fun MainScreen(
                             )
 
                             TagButton(
-                                isMeasuring = uiState.isMeasuring,
+                                isMeasuring = uiState.isStatusVerified && uiState.isMeasuring,
                                 onClick = { viewModel.onTagPressed() },
                                 modifier = Modifier
                                     .offset(y = (-10).dp)

@@ -72,7 +72,8 @@ data class MainUiState(
     val selectedExercise: Int = -1,
     val hasUnsyncedTags: Boolean = false,
     val showSyncErrorBadge: Boolean = false,
-    val loginTimeDisplay: String = ""
+    val loginTimeDisplay: String = "",
+    val isStatusVerified: Boolean = false
 )
 
 class MainViewModel : ViewModel() {
@@ -205,14 +206,17 @@ class MainViewModel : ViewModel() {
 
                             Log.d(TAG, "checkRecordingStatus: serverStatus=$serverStatus, serverMeasureId=$serverMeasureId, localMeasureId=$localMeasureId")
 
-                            // If server says we are measuring, trust the server and sync the state/ID
+                            // Always check for ID change to clear old data, regardless of measuring state
+                            if (serverMeasureId != null && serverMeasureId != localMeasureId) {
+                                Log.i(TAG, "Session ID changed ($localMeasureId -> $serverMeasureId), clearing local tags")
+                                repository.clearLocalEventTags()
+                                tokenManager.measureRecordId = serverMeasureId
+                                // Reload to update UI with empty list
+                                loadEventTags()
+                            }
+
+                            // Update measuring state
                             if (serverStatus) {
-                                if (serverMeasureId != localMeasureId) {
-                                    Log.i(TAG, "Syncing measureRecordId from server: $localMeasureId -> $serverMeasureId")
-                                    // Clear local tags as this is a new measurement session
-                                    repository.clearLocalEventTags()
-                                    tokenManager.measureRecordId = serverMeasureId
-                                }
                                 if (!uiState.isMeasuring) {
                                     Log.d(TAG, "Enabling tag button (serverStatus=true)")
                                     uiState = uiState.copy(isMeasuring = true)
@@ -226,6 +230,8 @@ class MainViewModel : ViewModel() {
                                     tokenManager.isMeasuring = false
                                 }
                             }
+                            // State is verified after successful API return
+                            uiState = uiState.copy(isStatusVerified = true)
                         }
                     } else {
                         // Network error or server unreachable → keep current state to allow offline tagging
@@ -242,6 +248,10 @@ class MainViewModel : ViewModel() {
 
     // ---- Tag Flow ----
     fun onTagPressed() {
+        if (!uiState.isMeasuring) {
+            Log.w(TAG, "onTagPressed: ignored because isMeasuring is false")
+            return
+        }
         val now = System.currentTimeMillis() // Pure UTC
         val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         Log.d(TAG, "onTagPressed: measureRecordId=${tokenManager.measureRecordId}")
