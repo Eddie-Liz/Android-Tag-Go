@@ -63,7 +63,7 @@ class TokenManager(private val context: Context) {
             }
             return token
         }
-        set(value) = prefs.edit().putString("push_token", value).commit()
+        set(value) { prefs.edit().putString("push_token", value).commit() }
 
     var vendorName: String?
         get() = prefs.getString(KEY_VENDOR_NAME, null)
