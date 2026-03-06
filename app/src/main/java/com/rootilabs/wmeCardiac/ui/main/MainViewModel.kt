@@ -237,8 +237,17 @@ class MainViewModel : ViewModel() {
                             uiState = uiState.copy(isStatusVerified = true)
                         }
                     } else {
-                        // Network error or server unreachable → keep current state to allow offline tagging
-                        Log.w(TAG, "checkRecordingStatus failed, keeping current local state")
+                        val exceptionMsg = result.exceptionOrNull()?.message
+                        if (exceptionMsg == "INVALID_PATIENT" || exceptionMsg?.contains("401") == true) {
+                            Log.w(TAG, "checkRecordingStatus: patient is invalid or unauthorized (fatal). Freezing old session state.")
+                            if (uiState.isMeasuring) {
+                                uiState = uiState.copy(isMeasuring = false)
+                                tokenManager.isMeasuring = false
+                            }
+                        } else {
+                            // Network error or server unreachable → keep current state to allow offline tagging
+                            Log.w(TAG, "checkRecordingStatus failed, keeping current local state")
+                        }
                     }
                 }
             } catch (e: Exception) {

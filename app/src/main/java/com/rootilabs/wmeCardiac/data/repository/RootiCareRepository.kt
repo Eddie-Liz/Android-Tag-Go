@@ -108,7 +108,11 @@ class RootiCareRepository(
             } else {
                 val errorMsg = response.errorBody()?.string() ?: ""
                 Log.e(TAG, "getCurrentMeasurement failed: ${response.code()} - $errorMsg")
-                Result.failure(Exception("Get measurement failed: ${response.code()}"))
+                if (response.code() == 400 && errorMsg.contains("invalid_patient", ignoreCase = true)) {
+                    Result.failure(Exception("INVALID_PATIENT"))
+                } else {
+                    Result.failure(Exception("Get measurement failed: ${response.code()}"))
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "getCurrentMeasurement error", e)
