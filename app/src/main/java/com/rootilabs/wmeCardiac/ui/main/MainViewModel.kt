@@ -217,12 +217,10 @@ class MainViewModel : ViewModel() {
                             if (isDifferentHardware) {
                                 Log.w(TAG, "checkRecordingStatus: Server session active on DIFFERENT hardware ($serverHardwareId, expecting $localHardwareId). Ignoring new session ID to prevent mix-ups.")
                                 
-                                // Since our session was superseded by another device, we consider ourselves NOT measuring
-                                if (uiState.isMeasuring) {
-                                    uiState = uiState.copy(isMeasuring = false)
-                                    tokenManager.isMeasuring = false
-                                }
                                 // We purposely DO NOT update tokenManager.measureRecordId or sync tags.
+                                // We ALSO DO NOT set isMeasuring to false! 
+                                // This allows Device 1 to continue recording and submitting tags 
+                                // to its own local session ID until it is explicitly ended or deleted.
                             } else {
                                 // Always sync ID if the Session ID has changed,
                                 // regardless of whether the session is currently active or ended.
