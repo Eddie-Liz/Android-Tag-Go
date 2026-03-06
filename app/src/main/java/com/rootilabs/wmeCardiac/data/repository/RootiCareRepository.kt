@@ -279,7 +279,10 @@ class RootiCareRepository(
 
         return try {
             val request = AddVirtualTagsRequest(
-                deviceUUID = tokenManager.deviceId,
+                // Use the RootiRx hardware ID as the primary device identifier if available,
+                // otherwise fallback to the unique phone ID. This keeps the "Source Device"
+                // consistent on the server even if the user swaps phones mid-session.
+                deviceUUID = tokenManager.serverDeviceId ?: tokenManager.deviceId,
                 appVersion = tokenManager.appVersion,
                 appType = 2, // Android
                 tags = tags.map { it.toVirtualTagRequest() }
