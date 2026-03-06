@@ -211,9 +211,8 @@ class MainViewModel : ViewModel() {
                             // We DO NOT clear local event tags here to prevent UI flashes or data loss 
                             // if the session reconnects right after a backend refresh (e.g. rootirx re-recording).
                             if (serverMeasureId != null && serverMeasureId != localMeasureId) {
-                                Log.d(TAG, "Session ID changed ($localMeasureId -> $serverMeasureId), syncing ID and hardware deviceId without clearing tags")
+                                Log.d(TAG, "Session ID changed ($localMeasureId -> $serverMeasureId), syncing ID without clearing tags")
                                 tokenManager.measureRecordId = serverMeasureId
-                                tokenManager.serverDeviceId = info.deviceId
                                 loadEventTags()
                             } else if (serverMeasureId == null && localMeasureId != null) {
                                 // Server has no session, but local has one -> also an orphan
