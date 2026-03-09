@@ -192,8 +192,14 @@ class LoginViewModel : ViewModel() {
             Log.w(TAG, "New login initiated, clearing local event tags explicitly")
             repository.clearLocalEventTags()
             
-            // Sync the ID
-            ServiceLocator.tokenManager.measureRecordId = newMeasureId
+            // Write measureRecordId only if local is null (first login).
+            // Once set, the ID is immutable until explicit logout clears it.
+            if (ServiceLocator.tokenManager.measureRecordId == null) {
+                ServiceLocator.tokenManager.measureRecordId = newMeasureId
+                Log.d(TAG, "measureRecordId written (first login): $newMeasureId")
+            } else {
+                Log.w(TAG, "measureRecordId already set (${ServiceLocator.tokenManager.measureRecordId}), skipping write of $newMeasureId")
+            }
 
             // Step 5: Check Total History Count (API #4) & Fetch History (API #5)
             uiState = uiState.copy(statusMessage = "STATUS_SYNCING")

@@ -184,9 +184,8 @@ class MainViewModel : ViewModel() {
                 val patientId = tokenManager.patientId ?: ""
                 
                 if (institutionId.isNotEmpty() && patientId.isNotEmpty()) {
-                    // IMPORTANT: capture localMeasureId BEFORE API call.
-                    // repository.getCurrentMeasurement() will overwrite tokenManager.measureRecordId
-                    // with the server's value, so we must read the old value first.
+                    // Read local measureRecordId for comparison with server response.
+                    // measureRecordId is immutable after login — periodic checks only log discrepancies.
                     val localMeasureId = tokenManager.measureRecordId
 
                     val result = repository.getCurrentMeasurement(institutionId, patientId)
@@ -222,19 +221,13 @@ class MainViewModel : ViewModel() {
                                 // This allows Device 1 to continue recording and submitting tags 
                                 // to its own local session ID until it is explicitly ended or deleted.
                             } else {
-                                // Always sync ID if the Session ID has changed,
-                                // regardless of whether the session is currently active or ended.
-                                // We DO NOT clear local event tags here to prevent UI flashes or data loss 
-                                // if the session reconnects right after a backend refresh (e.g. rootirx re-recording).
+                                // measureRecordId is immutable once set at login.
+                                // Only log discrepancies — never overwrite the local ID from periodic status checks.
+                                // The ID can only be written at first login (when null) and cleared on explicit logout.
                                 if (serverMeasureId != null && serverMeasureId != localMeasureId) {
-                                    Log.d(TAG, "Session ID changed ($localMeasureId -> $serverMeasureId), syncing ID without clearing tags")
-                                    tokenManager.measureRecordId = serverMeasureId
-                                    loadEventTags()
+                                    Log.w(TAG, "Server session ID differs ($localMeasureId -> $serverMeasureId), keeping local ID (immutable after login)")
                                 } else if (serverMeasureId == null && localMeasureId != null) {
-                                    // Server has no session, but local has one -> also an orphan
-                                    Log.w(TAG, "No active session on server, syncing ID without clearing tags")
-                                    tokenManager.measureRecordId = null
-                                    loadEventTags()
+                                    Log.w(TAG, "No active session on server but local has $localMeasureId, keeping local ID (immutable after login)")
                                 }
     
                                 // Update measuring state

@@ -362,6 +362,20 @@ Authorization: Bearer {token}
 | `2` (MctTag) | *iOS only* - 進入主頁 |
 | Other | *Android: 不允許，應登出* |
 
+**Step 3 - `measureRecordId` 儲存規則（Immutable After Login）：**
+
+`measureRecordId` 儲存於 SharedPreferences（`TokenManager`），採用**登入後不可變**策略：
+
+| 事件 | 行為 | 說明 |
+|------|------|------|
+| 登入（本機為 null） | 寫入 API 回傳值 | 唯一的寫入時機 |
+| 登入（本機已有值） | 跳過寫入，僅 log 警告 | 防禦性保護，正常流程不應觸發 |
+| 定期狀態檢查（server ID 不同） | 僅 log，不更新 | 後端重新錄製不影響本機 ID |
+| 定期狀態檢查（server 無 session） | 僅 log，不更新 | session 被刪除不影響本機 ID |
+| 登出（`clearAll()`） | 清除 | 唯一的清除時機 |
+
+> **設計理由：** 防止定期狀態檢查時 server 端 session 變動（後端重新錄製、session 被刪除等）意外覆寫本機 `measureRecordId`，導致已建立的 Event Tag 與錯誤的 session 關聯。`measureRecordId` 一旦於登入時寫入，僅在明確登出時清除。
+
 **Retrofit Example:**
 
 ```kotlin
