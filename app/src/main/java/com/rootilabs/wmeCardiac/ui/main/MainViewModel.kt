@@ -202,35 +202,23 @@ class MainViewModel : ViewModel() {
                         } else {
                             val serverStatus = info.isMeasuring()
                             val serverMeasureId = info.measureRecordId
-                            val serverHardwareId = info.deviceId
-                            val localHardwareId = tokenManager.serverDeviceId
-
                             Log.d(TAG, "checkRecordingStatus: serverStatus=$serverStatus, serverMeasureId=$serverMeasureId, localMeasureId=$localMeasureId")
 
-                            // If another device started recording the same patient, the server's actively recording session
-                            // will belong to a DIFFERENT hardware device than what this phone was paired with.
-                            // If this happens, we must NOT adopt the new session ID. Doing so would cause this phone 
-                            // to upload tags to the other device's session and inadvertently overwrite the server's deviceId!
-                            val isDifferentHardware = serverHardwareId != null && localHardwareId != null && serverHardwareId != localHardwareId
+                            // 根據新的設計：
+                            // measureRecordId 一旦在登入時寫入，就永久鎖死在本地。
+                            // 背景定期檢查無論發生什麼事（Server ID 不同或是 Server 無 session），
+                            // 全都僅記錄 Log，絕對不覆寫 localMeasureId。
+                            if (serverMeasureId != null && serverMeasureId != localMeasureId) {
+                                Log.w(TAG, "checkRecordingStatus: Server session ID different ($serverMeasureId). Keeping local locked ID: $localMeasureId")
+                            } else if (serverMeasureId == null && localMeasureId != null) {
+                                Log.w(TAG, "checkRecordingStatus: No active session on server. Keeping local locked ID: $localMeasureId")
+                            }
 
-                            if (isDifferentHardware) {
-                                Log.w(TAG, "checkRecordingStatus: Server session active on DIFFERENT hardware ($serverHardwareId, expecting $localHardwareId). Ignoring new session ID to prevent mix-ups.")
-                                
-                                // We purposely DO NOT update tokenManager.measureRecordId or sync tags.
-                                // We ALSO DO NOT set isMeasuring to false! 
-                                // This allows Device 1 to continue recording and submitting tags 
-                                // to its own local session ID until it is explicitly ended or deleted.
-                            } else {
-                                // measureRecordId is immutable once set at login.
-                                // Only log discrepancies — never overwrite the local ID from periodic status checks.
-                                // The ID can only be written at first login (when null) and cleared on explicit logout.
-                                if (serverMeasureId != null && serverMeasureId != localMeasureId) {
-                                    Log.w(TAG, "Server session ID differs ($localMeasureId -> $serverMeasureId), keeping local ID (immutable after login)")
-                                } else if (serverMeasureId == null && localMeasureId != null) {
-                                    Log.w(TAG, "No active session on server but local has $localMeasureId, keeping local ID (immutable after login)")
-                                }
-    
-                                // Update measuring state
+                            // 是否要反灰標籤按鈕 (isMeasuring) 呢？
+                            // 若伺服器回傳的是「我們自己的 localMeasureId」的狀態，就照著更新。
+                            // 若伺服器端已經被其他裝置（或新錄製）蓋掉 (serverMeasureId != localMeasureId)，
+                            // 我們就不任意把自己的按鈕關掉，保護自己能安穩一直打 Tag 直到明確登出/刪除。
+                            if (serverMeasureId == localMeasureId) {
                                 if (serverStatus) {
                                     if (!uiState.isMeasuring) {
                                         Log.d(TAG, "Enabling tag button (serverStatus=true)")
@@ -238,14 +226,16 @@ class MainViewModel : ViewModel() {
                                         tokenManager.isMeasuring = true
                                     }
                                 } else {
-                                    // Server says not measuring (e.g. ended)
                                     if (uiState.isMeasuring) {
                                         Log.d(TAG, "Disabling tag button (serverStatus=false)")
                                         uiState = uiState.copy(isMeasuring = false)
                                         tokenManager.isMeasuring = false
                                     }
                                 }
+                            } else {
+                                Log.d(TAG, "Ignoring server status change ($serverStatus). Server active session is not our locked session.")
                             }
+                            
                             
                             // State is verified after successful API return
                             uiState = uiState.copy(isStatusVerified = true)
