@@ -192,13 +192,12 @@ class MainViewModel : ViewModel() {
                     if (result.isSuccess) {
                         val info = result.getOrNull()
 
-                        // info == null means 404: recording was deleted
+                        // info == null means 404: recording was deleted (or no active session for patient)
                         if (info == null) {
-                            Log.w(TAG, "checkRecordingStatus: session deleted (404), forcing isMeasuring=false")
-                            if (uiState.isMeasuring) {
-                                uiState = uiState.copy(isMeasuring = false)
-                                tokenManager.isMeasuring = false
-                            }
+                            Log.w(TAG, "checkRecordingStatus: no active session found (404) for patient. Keeping local locked state.")
+                            // We DO NOT force isMeasuring=false here anymore. 
+                            // This allows this device to continue tagging into its locked localMeasureId,
+                            // bypassing situations where a superseding session was created and then deleted.
                         } else {
                             val serverStatus = info.isMeasuring()
                             val serverMeasureId = info.measureRecordId
