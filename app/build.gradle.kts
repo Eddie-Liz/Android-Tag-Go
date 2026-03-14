@@ -18,8 +18,8 @@ android {
         applicationId = "com.rootilabs.wmeCardiac"
         minSdk = 24
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.0.6"
+        versionCode = 8
+        versionName = "1.0.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -33,19 +33,19 @@ android {
             firebaseAppDistribution {
                 artifactType = "APK"
                 releaseNotes = """
-                    [v1.0.5 Bug Fix / 修正說明]
-                    - EN: Allow upper-case patient/institution IDs by removing automatic lowercase normalization during login and local persistence.
-                    - CH: 修正登入時會將機構代碼與病患ID自動強制轉為小寫，導致伺服器查無病患（400 invalid_patient）的問題。
-                    - EN: Fixed permanent login lockout (409 Error) after an offline logout by unconditionally revoking old active sessions.
-                    - CH: 修正因無網路登出後，伺服器卡在登入狀態導致被永久鎖死（409錯誤）的問題。
-                    - EN: Fixed app switching to wrong server after restart by persisting the selected Server URL.
-                    - CH: 修正重新開啟 App 後，伺服器位置會跑掉變回預設的問題（新增伺服器 URL 紀錄機制）。
-                    - EN: Allowed forced offline logout and thorough local data wipe when the server is unreachable.
-                    - CH: 允許在無網路或伺服器異常時「強制登出」，並確實清空所有尚未上傳之標記資料。
-                    - EN: Enforced immediate lock of Tag button when session ends; requires manual relogin to start new session to prevent data bleed.
-                    - CH: 防止背景直接切換新量測紀錄。當紀錄結束時，Tag 按鈕會直接反灰凍結，使用者必須重新登入才能看到新局資料，確保新舊資料不互相污染。
-                    - EN: Sync appVersion text on Profile Screen dynamically with build config.
-                    - CH: 個人資料頁面的 App 版本號現在會自動同步最新版號。
+                    [v1.0.7 UI Refactor & Login Logic]
+                    - EN: Refactored Login UI to a modern flat rectangular design with bold text and simplified layout.
+                    - CH: 重構登入介面為簡約平面直角設計，並優化字體加粗顯示與佈局。
+                    - EN: Optimized login flow: Auto-login if only a single active recording device is detected.
+                    - CH: 優化登入流程：偵測到單一裝置錄製時自動選取並登入。
+                    - EN: Removed status text prompts during login for a cleaner user experience.
+                    - CH: 移除登入過程中的文字提示，提升視覺簡潔度。
+                    - EN: Added iOS-style bottom sheets for server and device selection.
+                    - CH: 新增 iOS 風格的底部抽屜選單用於選擇伺服器與裝置。
+                    - EN: Added vertical scroll support to prevent UI clipping on smaller screens.
+                    - CH: 登入頁面新增垂直捲動支援，防止在小螢幕或開啟鍵盤時元件被擠壓。
+                    - EN: Restyled warning alerts to match original dark theme.
+                    - CH: 修改警告彈窗樣式以符合深色主題風格。
                 """.trimIndent()
             }
         }

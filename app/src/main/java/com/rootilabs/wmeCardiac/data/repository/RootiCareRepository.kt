@@ -2,6 +2,8 @@ package com.rootilabs.wmeCardiac.data.repository
 
 import android.util.Log
 import androidx.work.*
+import androidx.work.workDataOf
+import androidx.work.OneTimeWorkRequestBuilder
 import com.rootilabs.wmeCardiac.Constants
 import com.rootilabs.wmeCardiac.data.api.AuthApi
 import com.rootilabs.wmeCardiac.data.api.RootiCareApi
@@ -14,6 +16,7 @@ import com.squareup.moshi.Moshi
 import java.text.SimpleDateFormat
 import java.util.*
 import com.rootilabs.wmeCardiac.di.ServiceLocator
+import com.rootilabs.wmeCardiac.data.worker.LogoutWorker
 
 class RootiCareRepository(
     private val authApi: AuthApi,
@@ -50,12 +53,29 @@ class RootiCareRepository(
         }
     }
 
-    // ---- API #2: Auth Patient (GET, subscribes the device) ----
-    suspend fun authPatient(institutionId: String, patientId: String): Result<AuthPatientResponse> {
+    // ---- API #2: Get Recording Measurements ----
+    suspend fun getRecordingMeasurements(institutionId: String, patientId: String): Result<List<MeasurementInfo>> {
         return try {
-            Log.d(TAG, "authPatient (Standard): institutionId=$institutionId, patientId=$patientId")
+            val response = rootiCareApi.getRecordingMeasurements(institutionId, patientId)
+            if (response.isSuccessful) {
+                Result.success(response.body() ?: emptyList())
+            } else {
+                val errorBody = response.errorBody()?.string()
+                Log.e(TAG, "getRecordingMeasurements failed: HTTP ${response.code()} - $errorBody")
+                Result.failure(Exception(parseError(errorBody)))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "getRecordingMeasurements exception", e)
+            Result.failure(e)
+        }
+    }
+
+    // ---- API #3: Auth Patient (GET, subscribes the device) ----
+    suspend fun authPatient(institutionId: String, patientId: String, measureId: String): Result<AuthPatientResponse> {
+        return try {
+            Log.d(TAG, "authPatient: institutionId=$institutionId, patientId=$patientId, measureId=$measureId")
             
-            val response = rootiCareApi.authPatient(institutionId, patientId)
+            val response = rootiCareApi.authPatient(institutionId, patientId, measureId)
             Log.d(TAG, "authPatient response code: ${response.code()}")
             
             if (response.isSuccessful) {
@@ -91,13 +111,14 @@ class RootiCareRepository(
         }
     }
 
-    // ---- API #3: Current Measurement ----
+    // ---- API #4: Current Measurement ----
     suspend fun getCurrentMeasurement(
         institutionId: String,
-        patientId: String
+        patientId: String,
+        measureId: String
     ): Result<MeasurementInfo?> {
         return try {
-            val response = rootiCareApi.getCurrentMeasurementInfo(institutionId, patientId)
+            val response = rootiCareApi.getCurrentMeasurementInfo(institutionId, patientId, measureId)
             if (response.isSuccessful) {
                 val body = response.body()
                 Log.d(TAG, "getCurrentMeasurement success: $body")
@@ -202,28 +223,31 @@ class RootiCareRepository(
     }
 
 
-    // ---- API #6: Unsubscribe (Logout) ----
+    // ---- API #7: Unsubscribe (Logout) ----
     suspend fun unsubscribePatient(
         explicitInstitutionId: String? = null,
-        explicitPatientId: String? = null
+        explicitPatientId: String? = null,
+        explicitMeasureId: String? = null
     ): Result<Unit> {
         val institutionId = explicitInstitutionId ?: tokenManager.institutionId ?: ""
         val patientId = explicitPatientId ?: tokenManager.patientId ?: ""
+        val measureId = explicitMeasureId ?: tokenManager.measureRecordId ?: ""
 
-        if (institutionId.isEmpty() || patientId.isEmpty()) {
-            Log.w(TAG, "Unsubscribe: missing institutionId or patientId, clearing anyway")
+        if (institutionId.isEmpty() || patientId.isEmpty() || measureId.isEmpty()) {
+            Log.w(TAG, "Unsubscribe: missing institutionId, patientId or measureId, clearing anyway")
             clearLocalData()
             return Result.success(Unit)
         }
 
         return try {
-            Log.d(TAG, "Logout: POST .../unsubscribe inst=$institutionId, patient=$patientId")
+            Log.d(TAG, "Logout: POST .../unsubscribe inst=$institutionId, patient=$patientId, measure=$measureId")
 
             val response = try {
-                rootiCareApi.unsubscribePatient(institutionId, patientId)
+                rootiCareApi.unsubscribePatient(institutionId, patientId, measureId)
             } catch (e: Exception) {
-                Log.e(TAG, "Logout network error: ${e.message}. Forcing local logout.")
+                Log.e(TAG, "Logout network error: ${e.message}. Enqueuing LogoutWorker.")
                 tokenManager.offlineLogoutPending = true
+                enqueueLogoutWorker(institutionId, patientId, measureId)
                 clearLocalData()
                 return Result.success(Unit)
             }
@@ -239,8 +263,9 @@ class RootiCareRepository(
                 Result.success(Unit)
             } else {
                 val errorMsg = response.errorBody()?.string() ?: "伺服器錯誤 ($statusCode)"
-                Log.w(TAG, "Logout server error: $statusCode - $errorMsg. Forcing local logout.")
+                Log.w(TAG, "Logout server error: $statusCode - $errorMsg. Enqueuing LogoutWorker.")
                 tokenManager.offlineLogoutPending = true
+                enqueueLogoutWorker(institutionId, patientId, measureId)
                 clearLocalData()
                 Result.success(Unit)
             }
@@ -250,15 +275,36 @@ class RootiCareRepository(
         }
     }
 
+    private fun enqueueLogoutWorker(institutionId: String, patientId: String, measureId: String) {
+        try {
+            val data = workDataOf(
+                "institutionId" to institutionId,
+                "patientId" to patientId,
+                "measureId" to measureId
+            )
+            val request = OneTimeWorkRequestBuilder<LogoutWorker>()
+                .setInputData(data)
+                .addTag("LogoutWorker")
+                .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                .build()
+
+            WorkManager.getInstance(ServiceLocator.appContext)
+                .enqueueUniqueWork("LogoutWorker_$measureId", ExistingWorkPolicy.KEEP, request)
+            Log.d(TAG, "Enqueued LogoutWorker for measureId: $measureId")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to enqueue LogoutWorker: ${e.message}")
+        }
+    }
+
     /**
      * Revoke an old/stale subscription during login 409 retry.
      * Unlike unsubscribePatient(), this does NOT clear local data and does NOT enqueue LogoutWorker,
      * so the ongoing login flow can continue safely.
      */
-    suspend fun revokeOldSession(institutionId: String, patientId: String) {
-        Log.d(TAG, "revokeOldSession: inst=$institutionId, patient=$patientId")
+    suspend fun revokeOldSession(institutionId: String, patientId: String, measureId: String) {
+        Log.d(TAG, "revokeOldSession: inst=$institutionId, patient=$patientId, meas=$measureId")
         try {
-            val response = rootiCareApi.unsubscribePatient(institutionId, patientId)
+            val response = rootiCareApi.unsubscribePatient(institutionId, patientId, measureId)
             Log.d(TAG, "revokeOldSession response: code=${response.code()}")
         } catch (e: Exception) {
             // Best-effort only — don't schedule LogoutWorker here

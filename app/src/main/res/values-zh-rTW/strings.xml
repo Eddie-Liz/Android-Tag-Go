@@ -80,8 +80,12 @@
     <string name="you_still_have_data_not_uploaded_confirm_logout">您還有資料尚未上傳，確定登出?</string>
     <string name="invalid_measurement_record">無效的量測紀錄。</string>
     <string name="no_active_subscription_found">找不到有效的訂閱方案。</string>
-    <string name="device_s_id">裝置 ID</string>
-    <string name="has_been_logged_in">已登入</string>
+    <string name="duplicate_patient_id_detected">檢測到重複的病患 ID</string>
+    <string name="duplicate_patient_id_detected_please_verify_before_setting">偵測到重複的 Patient ID，請確認後再設定。</string>
     <string name="no_device_has_started_recording">沒有任何裝置開始錄製。</string>
-    <string name="duplicate_patient_id_detected_please_verify_before_setting">偵測到重複的病患 ID，請先確認再設定。</string>
+    <string name="warning">錯誤</string>
+    <string name="select_device">選擇裝置</string>
+    <string name="has_been_logged_in">已登入</string>
+    <string name="device_s_id">裝置 ID</string>
+    <string name="this_patient_has_been_logged_in">此病患已登入。</string>
 </resources>

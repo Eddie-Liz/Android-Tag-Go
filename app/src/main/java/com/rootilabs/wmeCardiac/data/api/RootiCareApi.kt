@@ -7,18 +7,27 @@ import retrofit2.http.*
 
 interface RootiCareApi {
 
-    // API #2: Auth Patient (Subscribe Patient MCT Events)
-    @GET("/oauth/vendors/{institutionId}/patients/{patientId}")
+    // API #2: Get Recording Measurements (User selects from here)
+    @GET("/api/v1/institutions/{institutionId}/patients/{patientId}/recordingMeasurements")
+    suspend fun getRecordingMeasurements(
+        @Path("institutionId") institutionId: String,
+        @Path("patientId") patientId: String
+    ): Response<List<MeasurementInfo>>
+
+    // API #3: Auth Patient (Subscribe Patient MCT Events)
+    @GET("/oauth/vendors/{institutionId}/patients/{patientId}/measures/{measureId}")
     suspend fun authPatient(
         @Path("institutionId") institutionId: String,
-        @Path("patientId") patientId: String
+        @Path("patientId") patientId: String,
+        @Path("measureId") measureId: String
     ): Response<AuthPatientResponse>
 
-    // API #3: Get Current Measurement Info
-    @GET("/api/v1/institutions/{institutionId}/patients/{patientId}/measures/currentMeasurement")
+    // API #4: Get Current Measurement Info
+    @GET("/api/v1/institutions/{institutionId}/patients/{patientId}/measures/{measureId}")
     suspend fun getCurrentMeasurementInfo(
         @Path("institutionId") institutionId: String,
-        @Path("patientId") patientId: String
+        @Path("patientId") patientId: String,
+        @Path("measureId") measureId: String
     ): Response<MeasurementInfo>
 
     // API #4: Get Total History Event Tag Count
@@ -39,11 +48,12 @@ interface RootiCareApi {
         @Query("pageNumber") pageNumber: Int
     ): Response<EventTagHistoryResponse>
 
-    // API #6: Unsubscribe Patient (Logout) - no body needed per API doc
-    @POST("/oauth/vendors/{institutionId}/patients/{patientId}/unsubscribe")
+    // API #7: Unsubscribe Patient (Logout)
+    @POST("/oauth/vendors/{institutionId}/patients/{patientId}/measures/{measureId}/unsubscribe")
     suspend fun unsubscribePatient(
         @Path("institutionId") institutionId: String,
-        @Path("patientId") patientId: String
+        @Path("patientId") patientId: String,
+        @Path("measureId") measureId: String
     ): Response<ResponseBody>
 
     // API #7: Add Virtual Event Tags

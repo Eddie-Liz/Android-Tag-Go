@@ -188,7 +188,7 @@ class MainViewModel : ViewModel() {
                     // measureRecordId is immutable after login — periodic checks only log discrepancies.
                     val localMeasureId = tokenManager.measureRecordId
 
-                    val result = repository.getCurrentMeasurement(institutionId, patientId)
+                    val result = repository.getCurrentMeasurement(institutionId, patientId, localMeasureId ?: "")
                     if (result.isSuccess) {
                         val info = result.getOrNull()
 

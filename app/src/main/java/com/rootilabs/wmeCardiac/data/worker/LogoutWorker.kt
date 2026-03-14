@@ -12,11 +12,12 @@ class LogoutWorker(appContext: Context, workerParams: WorkerParameters) :
     override suspend fun doWork(): Result {
         val institutionId = inputData.getString("institutionId") ?: return Result.failure()
         val patientId = inputData.getString("patientId") ?: return Result.failure()
+        val measureId = inputData.getString("measureId") ?: return Result.failure()
 
-        Log.d("LogoutWorker", "Background Unsubscribe starting for: $institutionId / $patientId")
+        Log.d("LogoutWorker", "Background Unsubscribe starting for: $institutionId / $patientId / $measureId")
         
         val repository = ServiceLocator.repository
-        val result = repository.unsubscribePatient(institutionId, patientId)
+        val result = repository.unsubscribePatient(institutionId, patientId, measureId)
 
         return if (result.isSuccess) {
             Log.d("LogoutWorker", "Background Unsubscribe SUCCESS")

@@ -5,7 +5,7 @@ import com.squareup.moshi.Json
 data class AddVirtualTagsRequest(
     val deviceUUID: String,
     val appVersion: String,
-    val appType: Int = 2, // 2 = Android (per API doc)
+    val appType: Int = 1, // 1 = Android (per API doc)
     val tags: List<VirtualTagRequest>
 )
 

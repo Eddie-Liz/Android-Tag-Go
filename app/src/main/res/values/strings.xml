@@ -124,8 +124,11 @@
     <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">Your device is not currently recording, the event cannot be marked!</string>
     <string name="invalid_measurement_record">Invalid measurement record.</string>
     <string name="no_active_subscription_found">No active subscription found.</string>
-    <string name="device_s_id">Device ID</string>
-    <string name="has_been_logged_in">Has been logged in</string>
-    <string name="no_device_has_started_recording">No device has started recording.</string>
+    <string name="duplicate_patient_id_detected">Duplicate Patient ID detected</string>
     <string name="duplicate_patient_id_detected_please_verify_before_setting">Duplicate Patient ID detected. Please verify before setting.</string>
+    <string name="no_device_has_started_recording">No device has started recording.</string>
+    <string name="select_device">Select Device</string>
+    <string name="has_been_logged_in">Has been logged in</string>
+    <string name="device_s_id">Device ID</string>
+    <string name="this_patient_has_been_logged_in">This patient is already logged in.</string>
 </resources>

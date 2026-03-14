@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rootilabs.wmeCardiac.di.ServiceLocator
+import com.rootilabs.wmeCardiac.data.model.MeasurementInfo
 import kotlinx.coroutines.launch
 
 data class LoginUiState(
@@ -14,11 +15,20 @@ data class LoginUiState(
     val loginSuccess: Boolean = false,
     val statusMessage: String = "",
     val error: String? = null,
-    val showScanner: Boolean = false
+    val showScanner: Boolean = false,
+    val showDeviceSelection: Boolean = false,
+    val measurements: List<MeasurementInfo> = emptyList(),
+    val showDuplicateWarning: Boolean = false,
+    val selectedDeviceId: String? = null,
+    val selectedMeasureRecordId: String? = null,
+    val selectedDeviceIsLoggedIn: Boolean = false,
+    val showDeviceSheet: Boolean = false,
+    val showServerSheet: Boolean = false,
+    val transientErrorMessage: String? = null
 )
 
 enum class ServerRegion(val label: String, val url: String) {
-    AP("Asia-Pacific 1", "https://mct-api.rooticare.com/"),
+    AP("Asia-Pacific 1", "http://192.168.103.17:8080/"),
     AP2("Asia-Pacific 2", "https://mct2-api.rooticare.com/"),
     EU("Europe", "https://mcteu-api.rooticare.com/")
 }
@@ -43,7 +53,19 @@ class LoginViewModel : ViewModel() {
             return
         }
         viewModelScope.launch {
-            // Switch server before login and save it
+            // If we already have a selected device (and it's not logged in), 
+            // perform the second phase of login.
+            val selectedRecordId = uiState.selectedMeasureRecordId
+            if (selectedRecordId != null) {
+                if (uiState.selectedDeviceIsLoggedIn) {
+                    uiState = uiState.copy(error = "ALREADY_LOGGED_IN")
+                    return@launch
+                }
+                startPhase2(selectedRecordId)
+                return@launch
+            }
+
+            // Normal flow: Switch server before login and save it
             ServiceLocator.reinitWithBaseUrl(selectedServer.url)
             ServiceLocator.tokenManager.serverUrl = selectedServer.url
             performLogin()
@@ -52,183 +74,203 @@ class LoginViewModel : ViewModel() {
 
     private suspend fun performLogin() {
         try {
-            // Maintain original case of inputs since server might be case-sensitive
             institutionId = institutionId.trim()
             patientId = patientId.trim()
 
-            uiState = uiState.copy(isLoading = true, error = null, statusMessage = "STATUS_TOKEN")
-            Log.d(TAG, "=== Login Start === institutionId=$institutionId, patientId=$patientId")
-
-            // Capture oldMeasureId at the VERY START, before any 409 repair logic runs
-            val oldMeasureId = ServiceLocator.tokenManager.measureRecordId
-
-            // CRITICAL: Cancel any pending background logout workers that might have been
-            // enqueued by a previous failed attempt. This prevents "fake logout" after success.
-            try {
-                androidx.work.WorkManager.getInstance(ServiceLocator.appContext)
-                    .cancelAllWorkByTag("LogoutWorker") // or cancel unique if we used it
-                // Since we used OneTimeWorkRequestBuilder without a tag, let's use the Class name if possible,
-                // but simpler is to just cancel by tag if we had one.
-                // For now, let's cancel all to be safe, or just rely on the new revokeOldSession logic.
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to cancel work: ${e.message}")
-            }
+            uiState = uiState.copy(isLoading = true, error = null)
+            Log.d(TAG, "=== Login Phase 1 === institutionId=$institutionId, patientId=$patientId")
 
             // Step 1: Get Token
             val tokenResult = repository.getToken()
-            Log.d(TAG, "Step 1 getToken: success=${tokenResult.isSuccess}")
             if (tokenResult.isFailure) {
-                Log.e(TAG, "Token failed: ${tokenResult.exceptionOrNull()?.message}")
                 uiState = uiState.copy(isLoading = false, error = "GET_TOKEN_FAILED")
                 return
             }
 
-            // Step 2: Auth Patient
+            // Step 2: Get Recording Measurements
             uiState = uiState.copy(statusMessage = "STATUS_AUTH")
-            var authResult = repository.authPatient(institutionId, patientId)
-            Log.d(TAG, "Step 2 authPatient: success=${authResult.isSuccess}")
+            val measurementsResult = repository.getRecordingMeasurements(institutionId, patientId)
+            
+            if (measurementsResult.isFailure) {
+                uiState = uiState.copy(isLoading = false, error = measurementsResult.exceptionOrNull()?.message ?: "GET_MEASUREMENTS_FAILED")
+                return
+            }
 
-            // 409 = some device/session is already subscribed
-            // Strict Policy: Only allow auto-revoke if we are SURE it's the same session on this device.
-            if (authResult.isFailure && authResult.exceptionOrNull()?.message == "ALREADY_SUBSCRIBED") {
-                val tokenManager = ServiceLocator.tokenManager
-                val localMeasureId = tokenManager.measureRecordId
-                val lastLoggedOutId = tokenManager.lastLoggedOutMeasureId
-                
-                val measureCheck = repository.getCurrentMeasurement(institutionId, patientId)
-                val measureInfo = measureCheck.getOrNull()
-                val serverMeasureId = measureInfo?.measureRecordId
-                
-                Log.w(TAG, "409 check: localMeasureId=$localMeasureId, lastLoggedOutId=$lastLoggedOutId, serverMeasureId=$serverMeasureId")
+            val measurements = measurementsResult.getOrNull() ?: emptyList()
+            if (measurements.isEmpty()) {
+                Log.w(TAG, "No recording measurements found")
+                uiState = uiState.copy(isLoading = false, error = "NO_DEVICE_RECORDING")
+                return
+            }
 
-                // Strict check: Only recover if this device specifically failed to logout 
-                // of the EXACT SAME session that is currently active.
-                // This prevents `offlineLogoutPending` from a previous session from blindly 
-                // stealing a brand new session created by another phone.
-                val isStaleSessionOnSameDevice = tokenManager.offlineLogoutPending && 
-                                                 (lastLoggedOutId != null && lastLoggedOutId == serverMeasureId)
-
-                if (isStaleSessionOnSameDevice) {
-                    Log.w(TAG, "Stale or recently logged-out session on same device -> repairing")
-                    repository.revokeOldSession(institutionId, patientId)
+            Log.d(TAG, "Found ${measurements.size} measurements")
+            
+            if (measurements.size == 1) {
+                val singleInfo = measurements[0]
+                val recordId = singleInfo.measureRecordId
+                if (recordId != null) {
+                    uiState = uiState.copy(
+                        selectedDeviceId = singleInfo.deviceId,
+                        selectedMeasureRecordId = recordId,
+                        selectedDeviceIsLoggedIn = singleInfo.isPatientSubscribed == true,
+                        measurements = measurements,
+                        isLoading = false,
+                        error = if (singleInfo.isPatientSubscribed == true) "ALREADY_LOGGED_IN" else null
+                    )
                     
-                    // Clear the pending flag only if we successfully re-authenticate
-                    authResult = repository.authPatient(institutionId, patientId)
-                    Log.d(TAG, "Step 2 retry authPatient: success=${authResult.isSuccess}")
-                    
-                    if (authResult.isSuccess) {
-                        tokenManager.offlineLogoutPending = false
-                    } else if (authResult.exceptionOrNull()?.message == "ALREADY_SUBSCRIBED") {
-                        Log.w(TAG, "Revoke failed or conflicting session -> blocking login")
-                        uiState = uiState.copy(isLoading = false, error = "ALREADY_SUBSCRIBED")
-                        return
+                    if (singleInfo.isPatientSubscribed != true) {
+                        startPhase2(recordId)
                     }
-                } else {
-                    Log.w(TAG, "Conflicting session (other device is active) -> blocking login per strict 409 policy")
-                    uiState = uiState.copy(isLoading = false, error = "ALREADY_SUBSCRIBED")
                     return
                 }
             }
 
-            if (authResult.isFailure) {
-                val cause = authResult.exceptionOrNull()?.message ?: ""
-                Log.e(TAG, "authPatient failed: $cause")
-                uiState = uiState.copy(isLoading = false, error = cause)
-                return
-            }
-
-            // Step 3: Get Current Measurement
-            uiState = uiState.copy(statusMessage = "STATUS_MEASUREMENT")
-            val measureResult = repository.getCurrentMeasurement(institutionId, patientId)
-            Log.d(TAG, "Step 3 getCurrentMeasurement: success=${measureResult.isSuccess}")
-
-            if (measureResult.isFailure) {
-                Log.e(TAG, "Measurement failed: ${measureResult.exceptionOrNull()?.message}")
-                uiState = uiState.copy(isLoading = false, error = "MEASUREMENT_FAILED")
-                return
-            }
-
-            val measurementInfo = measureResult.getOrNull()
-            if (measurementInfo == null) {
-                Log.w(TAG, "No measurement info found (null)")
-                uiState = uiState.copy(isLoading = false, error = "NOT_MEASURING")
-                return
-            }
-
-            // Validation 1: isMeasuring?
-            val isMeasuring = measurementInfo.isMeasuring()
-            val now = System.currentTimeMillis()
-            Log.d(TAG, "Measurement Check: state=${measurementInfo.state}, expectedEndTime=${measurementInfo.expectedEndTime}, now=$now")
-
-            ServiceLocator.tokenManager.isMeasuring = isMeasuring
-            if (measurementInfo.deviceId != null) {
-                ServiceLocator.tokenManager.serverDeviceId = measurementInfo.deviceId
-                Log.d(TAG, "Server hardware deviceId (Rx) saved at login: ${measurementInfo.deviceId}")
-            }
-
-            if (!isMeasuring) {
-                Log.w(TAG, "Login blocked: Server says NOT_MEASURING (state=${measurementInfo.state}). Cleaning up.")
-                ServiceLocator.tokenManager.lastLoggedOutMeasureId = measurementInfo.measureRecordId
-                repository.unsubscribePatient()
-                uiState = uiState.copy(isLoading = false, error = "NOT_MEASURING")
-                return
-            }
-
-            if (!measurementInfo.isVirtualTagMode()) {
-                Log.w(TAG, "Login blocked: Server says mode is NOT VirtualTag (mode=${measurementInfo.mode}). Cleaning up.")
-                ServiceLocator.tokenManager.lastLoggedOutMeasureId = measurementInfo.measureRecordId
-                repository.unsubscribePatient()
-                uiState = uiState.copy(isLoading = false, error = "UNSUPPORTED_MODE")
-                return
-            }
-
-            // Step 4: Check measureRecordId
-            val newMeasureId = measurementInfo.measureRecordId
-            
-            Log.d(TAG, "Step 4 measureRecordId check: old=$oldMeasureId, new=$newMeasureId")
-
-            // Always clear local event tags on a new login, 
-            // to ensure no old data remains regardless of session ID status.
-            Log.w(TAG, "New login initiated, clearing local event tags explicitly")
-            repository.clearLocalEventTags()
-            
-            // Write measureRecordId only if local is null (first login).
-            // Once set, the ID is immutable until explicit logout clears it.
-            if (ServiceLocator.tokenManager.measureRecordId == null) {
-                ServiceLocator.tokenManager.measureRecordId = newMeasureId
-                Log.d(TAG, "measureRecordId written (first login): $newMeasureId")
-            } else {
-                Log.w(TAG, "measureRecordId already set (${ServiceLocator.tokenManager.measureRecordId}), skipping write of $newMeasureId")
-            }
-
-            // Step 5: Check Total History Count (API #4) & Fetch History (API #5)
-            uiState = uiState.copy(statusMessage = "STATUS_SYNCING")
-            val measureId = ServiceLocator.tokenManager.measureRecordId
-            Log.d(TAG, "Step 5 measureId=$measureId")
-            if (measureId != null) {
-                val countResult = repository.getTotalHistoryCount(institutionId, patientId, measureId)
-                val totalRow = countResult.getOrNull() ?: 0
-                Log.d(TAG, "Step 5a totalHistoryCount: totalRow=$totalRow")
-
-                if (totalRow > 0) {
-                    uiState = uiState.copy(statusMessage = "STATUS_DOWNLOADING:$totalRow")
-                    val fetchResult = repository.fetchAllEventTagHistory(institutionId, patientId, measureId)
-                    Log.d(TAG, "Step 5b fetchHistory: saved=${fetchResult.getOrNull()} records")
-                }
-            }
-
-            // Successful Login
-            val tokenManager = ServiceLocator.tokenManager
-            tokenManager.institutionId = institutionId
-            tokenManager.patientId = patientId
-            tokenManager.lastLoggedOutMeasureId = null
-            
-            Log.d(TAG, "=== Login Success === institutionId=$institutionId, patientId=$patientId, measureRecordId=${tokenManager.measureRecordId}")
-            uiState = uiState.copy(isLoading = false, loginSuccess = true)
+            // Phase 1 Success: Show selection UI
+            uiState = uiState.copy(
+                isLoading = false,
+                measurements = measurements,
+                showDuplicateWarning = measurements.size >= 2,
+                showDeviceSheet = true // Show the iOS-style picker
+            )
         } catch (e: Throwable) {
-            Log.e(TAG, "FATAL CRASH during login flow", e)
+            Log.e(TAG, "Error in login phase 1", e)
             uiState = uiState.copy(isLoading = false, error = "FATAL_ERROR")
         }
+    }
+
+    fun onMeasurementSelected(info: MeasurementInfo) {
+        val measureId = info.measureRecordId ?: return
+        
+        uiState = uiState.copy(
+            selectedDeviceId = info.deviceId,
+            selectedMeasureRecordId = measureId,
+            selectedDeviceIsLoggedIn = info.isPatientSubscribed == true,
+            showDeviceSheet = false,
+            showDeviceSelection = false,
+            error = null
+        )
+
+        if (info.isPatientSubscribed == true) {
+            uiState = uiState.copy(error = "ALREADY_LOGGED_IN")
+        }
+        // Removed startPhase2(info) call - user must click Login button again
+    }
+
+    private fun startPhase2(measureId: String) {
+        uiState = uiState.copy(isLoading = true, statusMessage = "STATUS_AUTH")
+        
+        viewModelScope.launch {
+            try {
+                Log.d(TAG, "=== Login Phase 2 === measureId=$measureId")
+                
+                // Step 3: Auth Patient
+                var authResult = repository.authPatient(institutionId, patientId, measureId)
+                
+                // 409 Repair Logic
+                if (authResult.isFailure && authResult.exceptionOrNull()?.message == "ALREADY_SUBSCRIBED") {
+                    val tokenManager = ServiceLocator.tokenManager
+                    val lastLoggedOutId = tokenManager.lastLoggedOutMeasureId
+                    
+                    // Repair only if same session that was recently logged out
+                    if (tokenManager.offlineLogoutPending && lastLoggedOutId == measureId) {
+                        Log.w(TAG, "Repairing stale session $measureId")
+                        repository.revokeOldSession(institutionId, patientId, measureId)
+                        authResult = repository.authPatient(institutionId, patientId, measureId)
+                    } else {
+                        uiState = uiState.copy(isLoading = false, error = "ALREADY_SUBSCRIBED")
+                        return@launch
+                    }
+                }
+
+                if (authResult.isFailure) {
+                    uiState = uiState.copy(isLoading = false, error = authResult.exceptionOrNull()?.message ?: "AUTH_FAILED")
+                    return@launch
+                }
+
+                // Step 4: Get Current Measurement Info
+                uiState = uiState.copy(statusMessage = "STATUS_MEASUREMENT")
+                val measureResult = repository.getCurrentMeasurement(institutionId, patientId, measureId)
+                val measurementInfo = measureResult.getOrNull()
+                
+                if (measurementInfo == null || !measurementInfo.isMeasuring()) {
+                    Log.w(TAG, "Device not measuring or not found. Cleaning up subscription.")
+                    repository.unsubscribePatient(institutionId, patientId, measureId)
+                    uiState = uiState.copy(isLoading = false, error = "NOT_MEASURING")
+                    return@launch
+                }
+
+                if (!measurementInfo.isVirtualTagMode()) {
+                    Log.w(TAG, "Unsupported mode: ${measurementInfo.mode}. Cleaning up subscription.")
+                    repository.unsubscribePatient(institutionId, patientId, measureId)
+                    uiState = uiState.copy(isLoading = false, error = "UNSUPPORTED_MODE")
+                    return@launch
+                }
+
+                // Update TokenManager
+                val tokenManager = ServiceLocator.tokenManager
+                tokenManager.isMeasuring = true
+                if (measurementInfo.deviceId != null) {
+                    tokenManager.serverDeviceId = measurementInfo.deviceId
+                }
+
+                // Lock measureRecordId
+                repository.clearLocalEventTags()
+                if (tokenManager.measureRecordId == null) {
+                    tokenManager.measureRecordId = measureId
+                }
+
+                // Step 5: Sync History
+                uiState = uiState.copy(statusMessage = "STATUS_SYNCING")
+                val countResult = repository.getTotalHistoryCount(institutionId, patientId, measureId)
+                val totalRow = countResult.getOrNull() ?: 0
+                
+                if (totalRow > 0) {
+                    uiState = uiState.copy(statusMessage = "STATUS_DOWNLOADING:$totalRow")
+                    repository.fetchAllEventTagHistory(institutionId, patientId, measureId)
+                }
+
+                // Finish
+                tokenManager.institutionId = institutionId
+                tokenManager.patientId = patientId
+                tokenManager.lastLoggedOutMeasureId = null
+                
+                uiState = uiState.copy(isLoading = false, loginSuccess = true)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error in login phase 2", e)
+                uiState = uiState.copy(isLoading = false, error = "FATAL_ERROR")
+            }
+        }
+    }
+
+    fun onDismissDeviceSelection() {
+        uiState = uiState.copy(showDeviceSelection = false, showDuplicateWarning = false, showDeviceSheet = false)
+    }
+
+    fun onDismissDuplicateWarning() {
+        uiState = uiState.copy(showDuplicateWarning = false)
+    }
+    
+    fun onDismissDeviceSheet() {
+        uiState = uiState.copy(showDeviceSheet = false)
+    }
+
+    fun onShowDeviceSheet() {
+        if (uiState.measurements.isNotEmpty()) {
+            uiState = uiState.copy(showDeviceSheet = true)
+        }
+    }
+
+    fun onShowServerSheet() {
+        uiState = uiState.copy(showServerSheet = true)
+    }
+
+    fun onDismissServerSheet() {
+        uiState = uiState.copy(showServerSheet = false)
+    }
+
+    fun onServerSelected(region: ServerRegion) {
+        selectedServer = region
+        uiState = uiState.copy(showServerSheet = false)
     }
 
     fun onScanClicked() {

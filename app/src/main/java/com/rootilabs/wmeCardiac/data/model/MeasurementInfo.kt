@@ -7,7 +7,8 @@ data class MeasurementInfo(
     val state: Int? = null,
     val launchTime: Long? = null,
     val expectedEndTime: Long? = null,
-    val deviceId: String? = null
+    val deviceId: String? = null,
+    val isPatientSubscribed: Boolean? = null
 ) {
     fun isMeasuring(): Boolean {
         val now = System.currentTimeMillis()
