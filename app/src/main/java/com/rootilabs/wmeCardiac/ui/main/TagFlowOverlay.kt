@@ -196,7 +196,7 @@ private fun BoxScope.SymptomSelectionContent(
                                 imageVector = icon.imageVector,
                                 contentDescription = null,
                                 tint = tint,
-                                modifier = Modifier.size(40.dp)
+                                modifier = Modifier.size(40.dp).padding(6.dp) // Added padding to scale down vector
                             )
                             is IconSource.Resource -> Icon(
                                 painter = painterResource(id = icon.resId),
@@ -585,7 +585,7 @@ private fun ConfirmationIconRow(icon: IconSource, text: String) {
                     imageVector = icon.imageVector,
                     contentDescription = null,
                     tint = Color(0xFF757575),
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(36.dp).padding(4.dp)
                 )
                 is IconSource.Resource -> Icon(
                     painter = painterResource(id = icon.resId),

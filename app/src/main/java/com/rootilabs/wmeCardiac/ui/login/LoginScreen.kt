@@ -201,8 +201,10 @@ fun LoginScreen(
             Text(
                 text = stringResource(id = R.string.login_description),
                 color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium
+                fontSize = 16.sp, 
+                fontWeight = FontWeight.Medium,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -477,10 +479,17 @@ fun DeviceSelectionSheet(
             Column(modifier = Modifier.fillMaxWidth()) {
                 // Header
                 Box(
-                    modifier = Modifier.fillMaxWidth().height(48.dp).background(TagGoGreen),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).background(TagGoGreen).padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(stringResource(R.string.select_device), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Text(
+                        text = stringResource(R.string.select_device), 
+                        color = Color.White, 
+                        fontWeight = FontWeight.Bold, 
+                        fontSize = 20.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 48.dp)
+                    )
                     IconButton(
                         onClick = onDismiss,
                         modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp)
@@ -563,9 +572,16 @@ fun DeviceSelectionSheet(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f).height(48.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = TagGoGreen),
-                        shape = RoundedCornerShape(4.dp)
+                        shape = RoundedCornerShape(4.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
                     ) {
-                        Text(stringResource(R.string.cancel), color = Color.White, fontSize = 18.sp)
+                        Text(
+                            text = stringResource(R.string.cancel), 
+                            color = Color.White, 
+                            fontSize = 18.sp,
+                            maxLines = 1,
+                            softWrap = false
+                        )
                     }
                     val isConfirmEnabled = selectedItem != null && selectedItem?.isPatientSubscribed != true
                     
@@ -577,9 +593,16 @@ fun DeviceSelectionSheet(
                             containerColor = TagGoGreen,
                             disabledContainerColor = TagGoGreen.copy(alpha = 0.5f)
                         ),
-                        shape = RoundedCornerShape(4.dp)
+                        shape = RoundedCornerShape(4.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
                     ) {
-                        Text(stringResource(R.string.confirm), color = Color.White, fontSize = 18.sp)
+                        Text(
+                            text = stringResource(R.string.confirm), 
+                            color = Color.White, 
+                            fontSize = 18.sp,
+                            maxLines = 1,
+                            softWrap = false
+                        )
                     }
                 }
             }

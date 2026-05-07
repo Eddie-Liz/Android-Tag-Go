@@ -36,7 +36,7 @@ android {
         applicationId = "com.rootilabs.wmeCardiac"
         minSdk = 24
         targetSdk = 36
-        versionCode = 17
+        versionCode = 10
         versionName = "1.0.9"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -56,29 +56,17 @@ android {
             firebaseAppDistribution {
                 artifactType = "APK"
                 releaseNotes = """
-                    [v1.0.9 UI & Bug Fixes]
-                    - EN: Reverted auto-upload logic; tags are manually uploaded via history.
-                    - CH: 取消斷網自動補傳機制，統一於歷史紀錄頁面手動重試上傳。
-                    - EN: Added missing translations for Headache, Nausea, and Irregular Heartbeat.
-                    - CH: 補齊頭痛、噁心、心律不整之多國語系翻譯。
-                    [v1.0.8 Offline Logout & UI Fixes]
-                    - EN: Update logout logic to properly handle network errors; logout will fail instead of clearing local states.
-                    - CH: 修正斷網時的登出流程，在無網路時會直接失敗並保留本地帳號資料。
-                    - EN: Realigned device selection text layout to fit on one row.
-                    - CH: 修改裝置選單列表文字大小與強制單行，避免在過小螢幕發生換行擠壓。
-                    [v1.0.7 UI Refactor & Login Logic]
-                    - EN: Refactored Login UI to a modern flat rectangular design with bold text and simplified layout.
-                    - CH: 重構登入介面為簡約平面直角設計，並優化字體加粗顯示與佈局。
-                    - EN: Optimized login flow: Auto-login if only a single active recording device is detected.
-                    - CH: 優化登入流程：偵測到單一裝置錄製時自動選取並登入。
-                    - EN: Removed status text prompts during login for a cleaner user experience.
-                    - CH: 移除登入過程中的文字提示，提升視覺簡潔度。
-                    - EN: Added iOS-style bottom sheets for server and device selection.
-                    - CH: 新增 iOS 風格的底部抽屜選單用於選擇伺服器與裝置。
-                    - EN: Added vertical scroll support to prevent UI clipping on smaller screens.
-                    - CH: 登入頁面新增垂直捲動支援，防止在小螢幕或開啟鍵盤時元件被擠壓。
-                    - EN: Restyled warning alerts to match original dark theme.
-                    - CH: 修改警告彈窗樣式以符合深色主題風格。
+                    [v1.0.9 更新內容]
+                    - 調整標記上傳機制：斷網時的標記改為需在歷史紀錄中手動重試上傳。
+                    - 修正多國語系：補齊頭痛、噁心、心律不整等多國語言翻譯，確保正確顯示。
+                    - 介面與排版優化：修正首頁字體大小與部分畫面的跑版問題。
+                    
+                    [v1.0.8 更新內容]
+                    - 登出流程修正：無網路時將中斷登出，保留使用者的本機紀錄。
+                    
+                    [v1.0.7 更新內容]
+                    - 登入介面大改版：採用全新平面簡約設計，並加入底部抽屜選單。
+                    - 登入體驗優化：當只有一台測量裝置時，系統將自動完成選取並登入。
                 """.trimIndent()
             }
         }

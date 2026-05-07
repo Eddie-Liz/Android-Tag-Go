@@ -156,12 +156,25 @@ fun HistoryRow(tag: EventTagDbEntity) {
     val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f)
     
     val exercise = exercises.find { it.id == tag.exerciseIntensity }
-    val selectedSymptoms = symptoms.filter { tag.eventType.contains(it.id) }
-    // 找出在 Android 症狀列表中找不到的 ID（可能是 iOS 專屬 ID）
-    val unknownIds = tag.eventType.filter { id -> symptoms.none { it.id == id } && id != 27 }
-    if (unknownIds.isNotEmpty()) {
-        android.util.Log.d("HistoryScreen", "未知症狀 ID: $unknownIds (from eventType: ${tag.eventType})")
+    val extraSymptoms = tag.eventType.mapNotNull { id ->
+        if (symptoms.none { it.id == id }) {
+            when (id) {
+                3 -> com.rootilabs.wmeCardiac.ui.main.SymptomItem(3, R.string.symptom_headache, IconSource.Resource(R.drawable.icon_others))
+                6 -> com.rootilabs.wmeCardiac.ui.main.SymptomItem(6, R.string.symptom_irregular_heartbeat, IconSource.Resource(R.drawable.icon_others))
+                8 -> com.rootilabs.wmeCardiac.ui.main.SymptomItem(8, R.string.symptom_nausea, IconSource.Resource(R.drawable.icon_others))
+                else -> {
+                    if (id != 27) {
+                        android.util.Log.d("HistoryScreen", "未知症狀 ID: $id (from eventType: ${tag.eventType})")
+                    }
+                    null
+                }
+            }
+        } else {
+            null
+        }
     }
+    
+    val selectedSymptoms = symptoms.filter { tag.eventType.contains(it.id) } + extraSymptoms
 
     Column(
         modifier = Modifier

@@ -95,4 +95,8 @@
     <string name="virtual_tag">Tag virtuel</string>
     <string name="attention_colon">Attention :</string>
     <string name="this_patient_id_has_duplicate_recordings">Cet identifiant patient a des enregistrements en double sur la meme periode. Veuillez verifier que l\'identifiant patient est correct et selectionner le SN de l\'appareil pour cet enregistrement.</string>
+    <string name="select_device">Sélectionner l\'appareil</string>
+    <string name="notice_label">Remarque :</string>
+    <string name="cancel">Annuler</string>
+    <string name="notice_content">Cet ID patient a des enregistrements en double pendant la même période. Veuillez confirmer que l\'ID patient est correct et sélectionner le NS de l\'appareil pour cet enregistrement.</string>
 </resources>

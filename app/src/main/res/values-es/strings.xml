@@ -95,4 +95,8 @@
     <string name="virtual_tag">Etiqueta virtual</string>
     <string name="attention_colon">Atencion:</string>
     <string name="this_patient_id_has_duplicate_recordings">Este ID de paciente tiene grabaciones duplicadas en el mismo periodo. Verifique que el ID de paciente sea correcto y seleccione el SN del dispositivo para esta grabacion.</string>
+    <string name="select_device">Seleccionar dispositivo</string>
+    <string name="notice_label">Aviso:</string>
+    <string name="cancel">Cancelar</string>
+    <string name="notice_content">Esta ID de paciente tiene grabaciones duplicadas durante el mismo período. Confirme que la ID de paciente sea correcta y seleccione el SN del dispositivo para esta grabación.</string>
 </resources>

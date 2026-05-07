@@ -32,13 +32,10 @@ data class SymptomItem(
 val symptoms = listOf(
     SymptomItem(1, R.string.symptom_chest_pain, IconSource.Resource(R.drawable.icon_chestpain)),
     SymptomItem(2, R.string.symptom_dizziness, IconSource.Resource(R.drawable.icon_dizzy)),
-    SymptomItem(3, R.string.symptom_headache, IconSource.Vector(Icons.Default.Warning)), // Placeholder vector
     SymptomItem(7, R.string.symptom_palpitations, IconSource.Resource(R.drawable.icon_palpitation)),
     SymptomItem(4, R.string.symptom_fatigue, IconSource.Resource(R.drawable.icon_tired)),
     SymptomItem(5, R.string.symptom_rapid_heartbeat, IconSource.Resource(R.drawable.icon_tachycardia)),
-    SymptomItem(6, R.string.symptom_irregular_heartbeat, IconSource.Vector(Icons.Default.FavoriteBorder)), // Placeholder
-    SymptomItem(9, R.string.symptom_shortness_of_breath, IconSource.Resource(R.drawable.icon_gasp)),
-    SymptomItem(8, R.string.symptom_nausea, IconSource.Vector(Icons.Default.Face)) // Placeholder
+    SymptomItem(9, R.string.symptom_shortness_of_breath, IconSource.Resource(R.drawable.icon_gasp))
 )
 
 // 運動強度

@@ -95,4 +95,8 @@
     <string name="virtual_tag">Tag virtuale</string>
     <string name="attention_colon">Attenzione:</string>
     <string name="this_patient_id_has_duplicate_recordings">Questo ID paziente ha registrazioni duplicate nello stesso periodo. Verificare che l\'ID paziente sia corretto e selezionare il SN del dispositivo per questa registrazione.</string>
+    <string name="select_device">Seleziona dispositivo</string>
+    <string name="notice_label">Avviso:</string>
+    <string name="cancel">Annulla</string>
+    <string name="notice_content">Questo ID paziente ha registrazioni duplicate nello stesso periodo. Conferma che l\'ID paziente è corretto e seleziona l\'SN del dispositivo per questa registrazione.</string>
 </resources>

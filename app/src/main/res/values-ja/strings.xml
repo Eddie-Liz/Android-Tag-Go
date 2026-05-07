@@ -95,4 +95,8 @@
     <string name="virtual_tag">バーチャルタグ</string>
     <string name="attention_colon">ご注意:</string>
     <string name="this_patient_id_has_duplicate_recordings">この患者IDは同一期間に重複して録音されています。患者IDが正しいことを確認し、今回の録音に使用するデバイスSNを選択してください。</string>
+    <string name="select_device">デバイスを選択</string>
+    <string name="notice_label">ご注意:</string>
+    <string name="cancel">キャンセル</string>
+    <string name="notice_content">この患者IDは同一期間に重複して録音されています。患者IDが正しいことを確認し、今回の録音に使用するデバイスSNを選択してください。</string>
 </resources>

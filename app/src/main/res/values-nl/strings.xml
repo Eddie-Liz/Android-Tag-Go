@@ -95,4 +95,8 @@
     <string name="virtual_tag">Virtuele Tag</string>
     <string name="attention_colon">Let op:</string>
     <string name="this_patient_id_has_duplicate_recordings">Deze patient-ID heeft dubbele opnamen in dezelfde periode. Controleer of de patient-ID correct is en selecteer het apparaat-SN voor deze opname.</string>
+    <string name="select_device">Selecteer apparaat</string>
+    <string name="notice_label">Let op:</string>
+    <string name="cancel">Annuleren</string>
+    <string name="notice_content">Deze patiënt-ID heeft dubbele opnames in dezelfde periode. Controleer of de patiënt-ID correct is en selecteer het SN van het apparaat voor deze opname.</string>
 </resources>

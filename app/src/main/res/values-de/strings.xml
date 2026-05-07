@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="welcome">Willkommen</string>
-    <string name="login_description">Bitte füllen Sie die Details aus und melden Sie sich an</string>
+    <string name="login_description">Bitte Daten eingeben und anmelden</string>
     <string name="account_id">Konto-ID</string>
     <string name="id_number">ID-Nummer</string>
     <string name="select_server">Server auswählen</string>
@@ -95,4 +95,8 @@
     <string name="virtual_tag">Virtueller Tag</string>
     <string name="attention_colon">Achtung:</string>
     <string name="this_patient_id_has_duplicate_recordings">Diese Patienten-ID hat doppelte Aufnahmen im selben Zeitraum. Bitte überprüfen Sie die Patienten-ID und wählen Sie die Geräte-SN für diese Aufnahme aus.</string>
+    <string name="select_device">Gerät auswählen</string>
+    <string name="notice_label">Hinweis:</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="notice_content">Diese Patienten-ID weist im selben Zeitraum doppelte Aufzeichnungen auf. Bitte bestätigen Sie, dass die Patienten-ID korrekt ist, und wählen Sie die SN des Geräts für diese Aufzeichnung aus.</string>
 </resources>
