@@ -7,18 +7,18 @@
     <string name="select_server">Sélectionner le serveur</string>
     <string name="login">Connexion</string>
     <string name="logout">Déconnexion</string>
-    <string name="system_settings">Paramètres système</string>
-    <string name="personal_profile">Profil personnel</string>
-    <string name="digital_tagging">Marquage numérique</string>
-    <string name="tagging_history">Historique de marquage</string>
+    <string name="system_settings">Paramètres</string>
+    <string name="personal_profile">Profil</string>
+    <string name="digital_tagging">Tag virtuel</string>
+    <string name="tagging_history">Historique des tags</string>
     <string name="last_tag">Dernier marquage :</string>
     <string name="view">Voir</string>
     <string name="no_recording">Vous n\'enregistrez pas actuellement !</string>
     <string name="tap_to_tag">Appuyez sur le bouton pour marquer un événement</string>
     <string name="tag_flow_header">Vous venez d\'appuyer sur Tag !</string>
     <string name="retry_upload">Réessayer le téléchargement</string>
-    <string name="symptoms_title">1. Symptômes ressentis</string>
-    <string name="intensity_title">2. Intensité actuelle</string>
+    <string name="symptoms_title">1. Quels symptômes ressentez-vous ?</string>
+    <string name="intensity_title">2. Quelle était l\'intensité de votre exercice à l\'instant ?</string>
     <string name="symptoms_label">Symptômes ressentis</string>
     <string name="intensity_label">Intensité d\'exercice actuelle</string>
     <string name="confirm_logout">Êtes-vous sûr de vouloir vous déconnecter ?</string>
@@ -45,9 +45,9 @@
     <!-- Symptoms -->
     <string name="symptom_chest_pain">Douleur/Oppression thoracique</string>
     <string name="symptom_dizziness">Étourdissements</string>
-    <string name="symptom_palpitations">Palpitations</string>
-    <string name="symptom_fatigue">Fatigue/Faiblesse</string>
-    <string name="symptom_rapid_heartbeat">Battements de cœur rapides</string>
+    <string name="symptom_palpitations">Rythme cardiaque irrégulier</string>
+    <string name="symptom_fatigue">Fatigue/ épuisement</string>
+    <string name="symptom_rapid_heartbeat">Rythme cardiaque rapide/ accéléré</string>
     <string name="symptom_irregular_heartbeat">Battements de cœur irréguliers</string>
     <string name="symptom_shortness_of_breath">Essoufflement</string>
     <string name="symptom_headache">Maux de tête</string>
@@ -55,12 +55,12 @@
     <string name="symptom_others">Autres (Entrez d\'autres symptômes)</string>
 
     <!-- Intensity -->
-    <string name="intensity_high">Haute intensité</string>
-    <string name="intensity_medium">Intensité moyenne</string>
-    <string name="intensity_low">Faible intensité</string>
-    <string name="intensity_resting">Repos</string>
-    <string name="intensity_high_desc">Course, vélo, aérobic, etc.</string>
-    <string name="intensity_medium_desc">Escaliers, marche normale, etc.</string>
+    <string name="intensity_high">Exercice de haute intensité</string>
+    <string name="intensity_medium">Exercice d\'intensité modérée</string>
+    <string name="intensity_low">Exercice de faible intensité</string>
+    <string name="intensity_resting">Sédentaire</string>
+    <string name="intensity_high_desc">Course, vélo, danse aérobique, etc.</string>
+    <string name="intensity_medium_desc">Monter et descendre les escaliers, marche normale, etc.</string>
     <string name="intensity_low_desc">Promenade</string>
     <string name="intensity_resting_desc">Assis, dormant, etc.</string>
 
@@ -100,6 +100,8 @@
     <string name="notice_label">Remarque :</string>
     <string name="cancel">Annuler</string>
     <string name="notice_content">Cet ID patient a des enregistrements en double pendant la même période. Veuillez confirmer que l\'ID patient est correct et sélectionner le NS de l\'appareil pour cet enregistrement.</string>
+    <string name="network_error_message">Impossible de se connecter au serveur. Veuillez vérifier votre connexion réseau et réessayer.</string>
+    <string name="what_symptoms_are_you_feeling">1. Quels symptômes ressentez-vous ?</string>
     <string name="login_success">Connexion réussie</string>
     <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">Votre appareil n\'enregistre pas actuellement, l\'événement ne peut pas être marqué !</string>
     <string name="error">Erreur</string>

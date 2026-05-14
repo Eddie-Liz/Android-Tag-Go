@@ -10,7 +10,7 @@
     <string name="system_settings">系統設定</string>
     <string name="personal_profile">個人資料</string>
     <string name="digital_tagging">數位標記</string>
-    <string name="tagging_history">標記紀錄</string>
+    <string name="tagging_history">標記記錄</string>
     <string name="last_tag">上一次標註:</string>
     <string name="view">查看</string>
     <string name="no_recording">您現在並沒有在錄製中！</string>
@@ -19,7 +19,7 @@
     <string name="retry_upload">重新上傳</string>
     <string name="send">傳送</string>
     <string name="symptoms_title">1. 您感受到什麼症狀？</string>
-    <string name="intensity_title">2.您剛剛的運動強度？</string>
+    <string name="intensity_title">2. 您剛剛的運動強度？</string>
     <string name="symptoms_label">您感受到的症狀</string>
     <string name="intensity_label">當下運動強度</string>
     <string name="confirm_logout">您確定要登出應用程式？</string>
@@ -104,6 +104,8 @@
     <string name="virtual_tag">數位標記</string>
     <string name="attention_colon">請注意:</string>
     <string name="this_patient_id_has_duplicate_recordings">此病患ID於同一時段重複開錄。請確認病患ID正確，並選擇本次錄製的裝置SN。</string>
+    <string name="network_error_message">無法連線至伺服器，請檢查您的網路連線後再試一次。</string>
+    <string name="what_symptoms_are_you_feeling">1. 您感受到什麼症狀？</string>
     <string name="login_success">登入成功</string>
     <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">您的裝置目前不在錄製中，無法標註事件喔！</string>
     <string name="error">錯誤</string>

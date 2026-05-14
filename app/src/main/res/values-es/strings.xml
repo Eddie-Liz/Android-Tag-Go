@@ -7,9 +7,9 @@
     <string name="select_server">Seleccionar servidor</string>
     <string name="login">Iniciar sesión</string>
     <string name="logout">Cerrar sesión</string>
-    <string name="system_settings">Ajustes del sistema</string>
-    <string name="personal_profile">Perfil personal</string>
-    <string name="digital_tagging">Etiquetado digital</string>
+    <string name="system_settings">Configuración</string>
+    <string name="personal_profile">Perfil</string>
+    <string name="digital_tagging">Etiqueta virtual</string>
     <string name="tagging_history">Historial de etiquetas</string>
     <string name="last_tag">Última etiqueta:</string>
     <string name="view">Ver</string>
@@ -17,8 +17,8 @@
     <string name="tap_to_tag">Toca el botón para etiquetar un evento</string>
     <string name="tag_flow_header">¡Acabas de presionar Tag!</string>
     <string name="retry_upload">Reintentar carga</string>
-    <string name="symptoms_title">1. Síntomas sentidos</string>
-    <string name="intensity_title">2. Intensidad actual</string>
+    <string name="symptoms_title">1. ¿Qué síntomas está sintiendo?</string>
+    <string name="intensity_title">2. ¿Qué tan intenso fue su ejercicio?</string>
     <string name="symptoms_label">Síntomas experimentados</string>
     <string name="intensity_label">Intensidad de ejercicio actual</string>
     <string name="confirm_logout">¿Estás seguro de que quieres cerrar sesión?</string>
@@ -55,12 +55,12 @@
     <string name="symptom_others">Otros (ingrese otros síntomas)</string>
 
     <!-- Intensity -->
-    <string name="intensity_high">Alta intensidad</string>
-    <string name="intensity_medium">Intensidad media</string>
-    <string name="intensity_low">Baja intensidad</string>
-    <string name="intensity_resting">Reposo</string>
-    <string name="intensity_high_desc">Correr, ciclismo, aeróbicos, etc.</string>
-    <string name="intensity_medium_desc">Escaleras, caminar normal, etc.</string>
+    <string name="intensity_high">Ejercicio de alta intensidad</string>
+    <string name="intensity_medium">Ejercicio de intensidad moderada</string>
+    <string name="intensity_low">Ejercicio de baja intensidad</string>
+    <string name="intensity_resting">Sedentario</string>
+    <string name="intensity_high_desc">Correr, ciclismo, baile aeróbico, etc.</string>
+    <string name="intensity_medium_desc">Subir y bajar escaleras, caminar normal, etc.</string>
     <string name="intensity_low_desc">Paseo</string>
     <string name="intensity_resting_desc">Sentado, durmiendo, etc.</string>
 
@@ -100,6 +100,8 @@
     <string name="notice_label">Aviso:</string>
     <string name="cancel">Cancelar</string>
     <string name="notice_content">Esta ID de paciente tiene grabaciones duplicadas durante el mismo período. Confirme que la ID de paciente sea correcta y seleccione el SN del dispositivo para esta grabación.</string>
+    <string name="network_error_message">No se pudo conectar al servidor. Compruebe su conexión de red e inténtelo de nuevo.</string>
+    <string name="what_symptoms_are_you_feeling">1. ¿Qué síntomas está sintiendo?</string>
     <string name="login_success">Inicio de sesión exitoso</string>
     <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">¡Su dispositivo no está grabando actualmente, el evento no se puede marcar!</string>
     <string name="error">Error</string>

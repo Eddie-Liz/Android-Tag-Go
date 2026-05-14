@@ -7,18 +7,18 @@
     <string name="select_server">Seleziona Server</string>
     <string name="login">Accedi</string>
     <string name="logout">Esci</string>
-    <string name="system_settings">Impostazioni di sistema</string>
-    <string name="personal_profile">Profilo personale</string>
-    <string name="digital_tagging">Marcatura digitale</string>
-    <string name="tagging_history">Cronologia marcature</string>
+    <string name="system_settings">Impostazioni</string>
+    <string name="personal_profile">Profilo</string>
+    <string name="digital_tagging">Tag virtuale</string>
+    <string name="tagging_history">Cronologia tag</string>
     <string name="last_tag">Ultima marcatura:</string>
     <string name="view">Visualizza</string>
     <string name="no_recording">Non stai registrando al momento!</string>
     <string name="tap_to_tag">Tocca il pulsante per marcare un evento</string>
     <string name="tag_flow_header">Hai appena premuto Tag!</string>
     <string name="retry_upload">Riprova caricamento</string>
-    <string name="symptoms_title">1. Sintomi avvertiti</string>
-    <string name="intensity_title">2. Intensità attuale</string>
+    <string name="symptoms_title">1. Quali sintomi stai avvertendo?</string>
+    <string name="intensity_title">2. Quanto è stato intenso il tuo esercizio?</string>
     <string name="symptoms_label">Sintomi avvertiti</string>
     <string name="intensity_label">Intensità di esercizio attuale</string>
     <string name="confirm_logout">Sei sicuro di voler uscire?</string>
@@ -45,9 +45,9 @@
     <!-- Symptoms -->
     <string name="symptom_chest_pain">Dolore/Oppressione toracica</string>
     <string name="symptom_dizziness">Vertigini</string>
-    <string name="symptom_palpitations">Palpitazioni</string>
-    <string name="symptom_fatigue">Stanchezza/Debolezza</string>
-    <string name="symptom_rapid_heartbeat">Battito cardiaco rapido</string>
+    <string name="symptom_palpitations">Battito cardiaco irregolare</string>
+    <string name="symptom_fatigue">Stanchezza/ affaticamento</string>
+    <string name="symptom_rapid_heartbeat">Battito cardiaco rapido/ accelerato</string>
     <string name="symptom_irregular_heartbeat">Battito cardiaco irregolare</string>
     <string name="symptom_shortness_of_breath">Mancanza di respiro</string>
     <string name="symptom_headache">Mal di testa</string>
@@ -55,12 +55,12 @@
     <string name="symptom_others">Altri (Inserisci altri sintomi)</string>
 
     <!-- Intensity -->
-    <string name="intensity_high">Alta intensità</string>
-    <string name="intensity_medium">Intensità media</string>
-    <string name="intensity_low">Bassa intensità</string>
-    <string name="intensity_resting">Riposo</string>
-    <string name="intensity_high_desc">Corsa, ciclismo, aerobica, ecc.</string>
-    <string name="intensity_medium_desc">Scale, camminata normale, ecc.</string>
+    <string name="intensity_high">Esercizio ad alta intensità</string>
+    <string name="intensity_medium">Esercizio a intensità moderata</string>
+    <string name="intensity_low">Esercizio a bassa intensità</string>
+    <string name="intensity_resting">Sedentario</string>
+    <string name="intensity_high_desc">Corsa, ciclismo, danza aerobica, ecc.</string>
+    <string name="intensity_medium_desc">Salire e scendere le scale, camminata normale, ecc.</string>
     <string name="intensity_low_desc">Passeggiata</string>
     <string name="intensity_resting_desc">Seduto, dormendo, ecc.</string>
 
@@ -100,6 +100,8 @@
     <string name="notice_label">Avviso:</string>
     <string name="cancel">Annulla</string>
     <string name="notice_content">Questo ID paziente ha registrazioni duplicate nello stesso periodo. Conferma che l\'ID paziente è corretto e seleziona l\'SN del dispositivo per questa registrazione.</string>
+    <string name="network_error_message">Impossibile connettersi al server. Verificare la connessione di rete e riprovare.</string>
+    <string name="what_symptoms_are_you_feeling">1. Quali sintomi stai avvertendo?</string>
     <string name="login_success">Accesso riuscito</string>
     <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">Il tuo dispositivo non sta registrando al momento, l\'evento non può essere contrassegnato!</string>
     <string name="error">Errore</string>

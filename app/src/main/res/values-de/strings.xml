@@ -7,18 +7,18 @@
     <string name="select_server">Server auswählen</string>
     <string name="login">Anmelden</string>
     <string name="logout">Abmelden</string>
-    <string name="system_settings">System-Einstellungen</string>
-    <string name="personal_profile">Persönliches Profil</string>
-    <string name="digital_tagging">Digitale Kennzeichnung</string>
-    <string name="tagging_history">Kennzeichnungsverlauf</string>
+    <string name="system_settings">Einstellung</string>
+    <string name="personal_profile">Profil</string>
+    <string name="digital_tagging">Virtueller Tag</string>
+    <string name="tagging_history">Tag-Verlauf</string>
     <string name="last_tag">Letzte Kennzeichnung:</string>
     <string name="view">Ansehen</string>
     <string name="no_recording">Sie nehmen derzeit nicht auf!</string>
     <string name="tap_to_tag">Tippen Sie auf die Taste, um ein Ereignis zu kennzeichnen</string>
     <string name="tag_flow_header">Sie haben gerade Tag gedrückt!</string>
     <string name="retry_upload">Upload erneut versuchen</string>
-    <string name="symptoms_title">1. Gefühlte Symptome</string>
-    <string name="intensity_title">2. Aktuelle Intensität</string>
+    <string name="symptoms_title">1. Welche Symptome verspüren Sie?</string>
+    <string name="intensity_title">2. Wie intensiv war Ihr Training gerade?</string>
     <string name="symptoms_label">Gefühlte Symptome</string>
     <string name="intensity_label">Aktuelle Übungsintensität</string>
     <string name="confirm_logout">Sind Sie sicher, dass Sie sich abmelden möchten?</string>
@@ -45,9 +45,9 @@
     <!-- Symptoms -->
     <string name="symptom_chest_pain">Brustschmerzen/Engegefühl</string>
     <string name="symptom_dizziness">Schwindel</string>
-    <string name="symptom_palpitations">Herzrasen</string>
-    <string name="symptom_fatigue">Müdigkeit/Schwäche</string>
-    <string name="symptom_rapid_heartbeat">Schneller Herzschlag</string>
+    <string name="symptom_palpitations">Unregelmäßiger Herzschlag</string>
+    <string name="symptom_fatigue">Müdigkeit/ Erschöpfung</string>
+    <string name="symptom_rapid_heartbeat">Schneller/ rascher Herzschlag</string>
     <string name="symptom_irregular_heartbeat">Unregelmäßiger Herzschlag</string>
     <string name="symptom_shortness_of_breath">Atemnot</string>
     <string name="symptom_headache">Kopfschmerzen</string>
@@ -55,12 +55,12 @@
     <string name="symptom_others">Andere (Andere Symptome eingeben)</string>
 
     <!-- Intensity -->
-    <string name="intensity_high">Hohe Intensität</string>
-    <string name="intensity_medium">Mittlere Intensität</string>
-    <string name="intensity_low">Niedrige Intensität</string>
-    <string name="intensity_resting">Ruhe</string>
-    <string name="intensity_high_desc">Laufen, Radfahren, Aerobic usw.</string>
-    <string name="intensity_medium_desc">Treppen, normales Gehen usw.</string>
+    <string name="intensity_high">Hochintensives Training</string>
+    <string name="intensity_medium">Mittelintensives Training</string>
+    <string name="intensity_low">Niedrigintensives Training</string>
+    <string name="intensity_resting">Sitzend</string>
+    <string name="intensity_high_desc">Laufen, Radfahren, Aerobic-Tanz usw.</string>
+    <string name="intensity_medium_desc">Treppen hoch und runter, normales Gehen usw.</string>
     <string name="intensity_low_desc">Spaziergang</string>
     <string name="intensity_resting_desc">Sitzen, Schlafen usw.</string>
 
@@ -100,6 +100,8 @@
     <string name="notice_label">Hinweis:</string>
     <string name="cancel">Abbrechen</string>
     <string name="notice_content">Diese Patienten-ID weist im selben Zeitraum doppelte Aufzeichnungen auf. Bitte bestätigen Sie, dass die Patienten-ID korrekt ist, und wählen Sie die SN des Geräts für diese Aufzeichnung aus.</string>
+    <string name="network_error_message">Verbindung zum Server konnte nicht hergestellt werden. Bitte überprüfen Sie Ihre Netzwerkverbindung und versuchen Sie es erneut.</string>
+    <string name="what_symptoms_are_you_feeling">1. Welche Symptome verspüren Sie?</string>
     <string name="login_success">Anmeldung erfolgreich</string>
     <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">Ihr Gerät zeichnet derzeit nicht auf, das Ereignis kann nicht markiert werden!</string>
     <string name="error">Fehler</string>

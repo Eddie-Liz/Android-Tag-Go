@@ -7,9 +7,9 @@
     <string name="select_server">サーバーを選択</string>
     <string name="login">ログイン</string>
     <string name="logout">ログアウト</string>
-    <string name="system_settings">システム設定</string>
+    <string name="system_settings">設定</string>
     <string name="personal_profile">プロフィール</string>
-    <string name="digital_tagging">デジタルタグ</string>
+    <string name="digital_tagging">バーチャルタグ</string>
     <string name="tagging_history">タグ履歴</string>
     <string name="last_tag">前回のタグ:</string>
     <string name="view">表示</string>
@@ -17,8 +17,8 @@
     <string name="tap_to_tag">ボタンをタップしてイベントをタグ付け</string>
     <string name="tag_flow_header">タグを押しました！</string>
     <string name="retry_upload">再アップロード</string>
-    <string name="symptoms_title">1. 感じた症状</string>
-    <string name="intensity_title">2. 現在の運動強度</string>
+    <string name="symptoms_title">1. 感じている症状を選択してください?</string>
+    <string name="intensity_title">2. 症状発生時の運動強度を選択してください?</string>
     <string name="symptoms_label">感じた症状</string>
     <string name="intensity_label">現在の運動強度</string>
     <string name="confirm_logout">ログアウトしてもよろしいですか？</string>
@@ -45,9 +45,9 @@
     <!-- Symptoms -->
     <string name="symptom_chest_pain">胸の痛み・圧迫感</string>
     <string name="symptom_dizziness">めまい</string>
-    <string name="symptom_palpitations">動悸</string>
-    <string name="symptom_fatigue">疲労・倦怠感</string>
-    <string name="symptom_rapid_heartbeat">心拍が速い</string>
+    <string name="symptom_palpitations">不整脈</string>
+    <string name="symptom_fatigue">疲労／倦怠感</string>
+    <string name="symptom_rapid_heartbeat">動悸</string>
     <string name="symptom_irregular_heartbeat">不規則な心拍</string>
     <string name="symptom_shortness_of_breath">息切れ</string>
     <string name="symptom_headache">頭痛</string>
@@ -55,12 +55,12 @@
     <string name="symptom_others">その他（他の症状を入力）</string>
 
     <!-- Intensity -->
-    <string name="intensity_high">高強度運動</string>
-    <string name="intensity_medium">中強度運動</string>
-    <string name="intensity_low">軽度運動</string>
+    <string name="intensity_high">高強度の運動</string>
+    <string name="intensity_medium">中等度の運動</string>
+    <string name="intensity_low">低強度の運動</string>
     <string name="intensity_resting">安静</string>
-    <string name="intensity_high_desc">ランニング、サイクリングなど</string>
-    <string name="intensity_medium_desc">階段、通常の歩行など</string>
+    <string name="intensity_high_desc">ランニング、サイクリング、エアロビクスなど</string>
+    <string name="intensity_medium_desc">階段の上り下り、通常の歩行など</string>
     <string name="intensity_low_desc">散歩</string>
     <string name="intensity_resting_desc">座る、寝るなど</string>
 
@@ -100,6 +100,8 @@
     <string name="notice_label">ご注意:</string>
     <string name="cancel">キャンセル</string>
     <string name="notice_content">この患者IDは同一期間に重複して録音されています。患者IDが正しいことを確認し、今回の録音に使用するデバイスSNを選択してください。</string>
+    <string name="network_error_message">サーバーに接続できません。ネットワーク接続を確認してから、もう一度お試しください。</string>
+    <string name="what_symptoms_are_you_feeling">1. 感じている症状を選択してください?</string>
     <string name="login_success">ログイン成功</string>
     <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">デバイスは現在記録されていないため、イベントをマークできません！</string>
     <string name="error">エラー</string>
