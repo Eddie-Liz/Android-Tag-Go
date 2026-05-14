@@ -90,6 +90,7 @@ class MainViewModel : ViewModel() {
         private set
 
     private var isSyncing = false
+    private var networkCallback: android.net.ConnectivityManager.NetworkCallback? = null
 
     init {
         // Cancel any pending background logout tasks to prevent "ghost logout"
@@ -100,6 +101,24 @@ class MainViewModel : ViewModel() {
         Log.d(TAG, "MainViewModel Init: isLoggedIn=${tokenManager.isLoggedIn}, isMeasuring=${uiState.isMeasuring}, measureRecordId=${tokenManager.measureRecordId}, deviceId=${tokenManager.deviceId}")
         loadEventTags()
         checkRecordingStatus()
+        setupNetworkCallback()
+    }
+
+    private fun setupNetworkCallback() {
+        val connectivityManager = ServiceLocator.appContext.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+            
+        networkCallback = object : android.net.ConnectivityManager.NetworkCallback() {
+            override fun onLost(network: android.net.Network) {
+                super.onLost(network)
+                Log.d(TAG, "Network lost, showing warning dialog instantly")
+                viewModelScope.launch {
+                    if (!uiState.showNetworkWarningDialog) {
+                        uiState = uiState.copy(showNetworkWarningDialog = true)
+                    }
+                }
+            }
+        }
+        connectivityManager.registerDefaultNetworkCallback(networkCallback!!)
     }
 
     fun loadEventTags() {
@@ -454,6 +473,14 @@ class MainViewModel : ViewModel() {
                 Log.e(TAG, "Logout error", e)
                 uiState = uiState.copy(isLoading = false, error = "登出發生錯誤: ${e.message}")
             }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        networkCallback?.let {
+            val connectivityManager = ServiceLocator.appContext.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+            connectivityManager.unregisterNetworkCallback(it)
         }
     }
 }

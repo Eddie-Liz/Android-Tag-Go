@@ -385,9 +385,9 @@ fun LoginScreen(
             val context = androidx.compose.ui.platform.LocalContext.current
             val versionName = remember {
                 try {
-                    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.8"
+                    context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.10"
                 } catch (e: Exception) {
-                    "1.0.8"
+                    "1.0.10"
                 }
             }
             Text(
