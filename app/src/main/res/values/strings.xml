@@ -47,8 +47,10 @@
     <string name="symptom_palpitations">Irregular heartbeat</string>
     <string name="symptom_fatigue">Tired/ fatigued</string>
     <string name="symptom_rapid_heartbeat">Rapid/ fast heartbeat</string>
-    <string name="symptom_irregular_heartbeat">Irregular heartbeat</string>
+    <string name="symptom_irregular_heartbeat">Flutter/ skipped beats</string>
     <string name="symptom_shortness_of_breath">Shortness of breath</string>
+    <string name="symptom_passed_out">Passed out</string>
+    <string name="symptom_light_headedness">Light headedness</string>
     <string name="symptom_headache">Headache</string>
     <string name="symptom_nausea">Nausea</string>
     <string name="symptom_others">Other(please enter other symptoms)</string>
@@ -97,7 +99,6 @@
     <string name="other_please_enter_other_symptoms">Other(please enter other symptoms)</string>
     <string name="please_select_exercise_intensity_before_tag">Please select Exercise Intensity before tag</string>
     <string name="please_select_symptom">Please select symptom</string>
-    <string name="press_to_tag_the_event">Press to tag the event</string>
     <string name="record_is_currently_not_allowed_to_be_uploaded">Record is currently not allowed to be uploaded</string>
     <string name="running_cycling_aerobic_dance_etc">Running, cycling, aerobic dance, etc.</string>
     <string name="sedentary">Sedentary</string>

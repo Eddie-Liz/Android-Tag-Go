@@ -14,7 +14,7 @@
     <string name="last_tag">Laatste tag:</string>
     <string name="view">Bekijken</string>
     <string name="no_recording">Je bent momenteel niet aan het opnemen!</string>
-    <string name="tap_to_tag">Tik op de knop om een gebeurtenis te taggen</string>
+    <string name="tap_to_tag">Druk om de gebeurtenis te taggen</string>
     <string name="tag_flow_header">Je hebt net op Tag gedrukt!</string>
     <string name="retry_upload">Uploaden opnieuw proberen</string>
     <string name="symptoms_title">1. Welke symptomen voelt u?</string>
@@ -48,8 +48,10 @@
     <string name="symptom_palpitations">Onregelmatige hartslag</string>
     <string name="symptom_fatigue">Vermoeidheid/ uitputting</string>
     <string name="symptom_rapid_heartbeat">Snelle/ versnelde hartslag</string>
-    <string name="symptom_irregular_heartbeat">Onregelmatige hartslag</string>
+    <string name="symptom_irregular_heartbeat">Hartfladderen/ overgeslagen slagen</string>
     <string name="symptom_shortness_of_breath">Kortademigheid</string>
+    <string name="symptom_passed_out">Flauwgevallen</string>
+    <string name="symptom_light_headedness">Licht gevoel in het hoofd</string>
     <string name="symptom_headache">Hoofdpijn</string>
     <string name="symptom_nausea">Misselijkheid</string>
     <string name="symptom_others">Overige (voer andere symptomen in)</string>
@@ -105,4 +107,5 @@
     <string name="login_success">Inloggen succesvol</string>
     <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">Uw apparaat is momenteel niet aan het opnemen, de gebeurtenis kan niet worden gemarkeerd!</string>
     <string name="error">Fout</string>
+    <string name="warning">Waarschuwing</string>
 </resources>

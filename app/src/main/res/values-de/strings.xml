@@ -14,7 +14,7 @@
     <string name="last_tag">Letzte Kennzeichnung:</string>
     <string name="view">Ansehen</string>
     <string name="no_recording">Sie nehmen derzeit nicht auf!</string>
-    <string name="tap_to_tag">Tippen Sie auf die Taste, um ein Ereignis zu kennzeichnen</string>
+    <string name="tap_to_tag">Drücken Sie, um das Ereignis zu taggen</string>
     <string name="tag_flow_header">Sie haben gerade Tag gedrückt!</string>
     <string name="retry_upload">Upload erneut versuchen</string>
     <string name="symptoms_title">1. Welche Symptome verspüren Sie?</string>
@@ -48,8 +48,10 @@
     <string name="symptom_palpitations">Unregelmäßiger Herzschlag</string>
     <string name="symptom_fatigue">Müdigkeit/ Erschöpfung</string>
     <string name="symptom_rapid_heartbeat">Schneller/ rascher Herzschlag</string>
-    <string name="symptom_irregular_heartbeat">Unregelmäßiger Herzschlag</string>
+    <string name="symptom_irregular_heartbeat">Herzflattern/ ausgelassene Schläge</string>
     <string name="symptom_shortness_of_breath">Atemnot</string>
+    <string name="symptom_passed_out">Ohnmacht</string>
+    <string name="symptom_light_headedness">Benommenheit</string>
     <string name="symptom_headache">Kopfschmerzen</string>
     <string name="symptom_nausea">Übelkeit</string>
     <string name="symptom_others">Andere (Andere Symptome eingeben)</string>
@@ -105,4 +107,5 @@
     <string name="login_success">Anmeldung erfolgreich</string>
     <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">Ihr Gerät zeichnet derzeit nicht auf, das Ereignis kann nicht markiert werden!</string>
     <string name="error">Fehler</string>
+    <string name="warning">Warnung</string>
 </resources>

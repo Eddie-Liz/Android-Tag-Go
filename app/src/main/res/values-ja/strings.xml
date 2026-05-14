@@ -14,7 +14,7 @@
     <string name="last_tag">前回のタグ:</string>
     <string name="view">表示</string>
     <string name="no_recording">現在記録されていません！</string>
-    <string name="tap_to_tag">ボタンをタップしてイベントをタグ付け</string>
+    <string name="tap_to_tag">ボタンを押してください</string>
     <string name="tag_flow_header">タグを押しました！</string>
     <string name="retry_upload">再アップロード</string>
     <string name="symptoms_title">1. 感じている症状を選択してください?</string>
@@ -48,8 +48,10 @@
     <string name="symptom_palpitations">不整脈</string>
     <string name="symptom_fatigue">疲労／倦怠感</string>
     <string name="symptom_rapid_heartbeat">動悸</string>
-    <string name="symptom_irregular_heartbeat">不規則な心拍</string>
+    <string name="symptom_irregular_heartbeat">動悸／脈が飛ぶ</string>
     <string name="symptom_shortness_of_breath">息切れ</string>
+    <string name="symptom_passed_out">失神</string>
+    <string name="symptom_light_headedness">立ちくらみ</string>
     <string name="symptom_headache">頭痛</string>
     <string name="symptom_nausea">吐き気</string>
     <string name="symptom_others">その他（他の症状を入力）</string>
@@ -105,4 +107,5 @@
     <string name="login_success">ログイン成功</string>
     <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">デバイスは現在記録されていないため、イベントをマークできません！</string>
     <string name="error">エラー</string>
+    <string name="warning">警告</string>
 </resources>
