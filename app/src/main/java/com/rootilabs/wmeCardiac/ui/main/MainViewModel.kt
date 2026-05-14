@@ -73,7 +73,9 @@ data class MainUiState(
     val hasUnsyncedTags: Boolean = false,
     val showSyncErrorBadge: Boolean = false,
     val loginTimeDisplay: String = "",
-    val isStatusVerified: Boolean = false
+    val isStatusVerified: Boolean = false,
+    val showNotMeasuringDialog: Boolean = false,
+    val showNetworkWarningDialog: Boolean = false
 )
 
 class MainViewModel : ViewModel() {
@@ -246,10 +248,21 @@ class MainViewModel : ViewModel() {
                         // Exception from server (e.g. 400, 401, network disconnection)
                         // Treat these as temporary to allow offline tagging or keep current active state
                         Log.w(TAG, "checkRecordingStatus failed: ${result.exceptionOrNull()?.message}, keeping current local state")
+                        val error = result.exceptionOrNull()
+                        if (error != null && isNetworkError(error)) {
+                            uiState = uiState.copy(showNetworkWarningDialog = true)
+                        } else if (error == null || error.message?.contains("Unable to resolve host", ignoreCase = true) == true) {
+                            uiState = uiState.copy(showNetworkWarningDialog = true)
+                        }
                     }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "checkRecordingStatus failed: ${e.message}")
+                if (isNetworkError(e)) {
+                    uiState = uiState.copy(showNetworkWarningDialog = true)
+                } else if (e.message?.contains("Unable to resolve host", ignoreCase = true) == true) {
+                    uiState = uiState.copy(showNetworkWarningDialog = true)
+                }
             } finally {
                 isCheckingStatus = false
             }
@@ -258,12 +271,24 @@ class MainViewModel : ViewModel() {
 
     fun onTagPressed() {
         if (!uiState.isMeasuring) {
-            Log.w(TAG, "onTagPressed: ignored because isMeasuring is false")
+            Log.w(TAG, "onTagPressed: ignored because isMeasuring is false, showing dialog")
+            uiState = uiState.copy(showNotMeasuringDialog = true)
             return
         }
-        
-        uiState = uiState.copy(isLoading = true)
 
+        val now = System.currentTimeMillis() // Pure UTC
+        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        Log.d(TAG, "onTagPressed: start tag flow instantly")
+        uiState = uiState.copy(
+            tagFlowStep = TagFlowStep.SYMPTOM_SELECTION,
+            tagTime = now,
+            tagTimeFormatted = formatter.format(Date(now)), // Local Taiwan Time
+            selectedSymptoms = emptyList(),
+            otherSymptom = "",
+            selectedExercise = -1
+        )
+
+        // Background verification: check if still measuring without blocking the UI
         viewModelScope.launch {
             try {
                 val institutionId = tokenManager.institutionId ?: ""
@@ -277,39 +302,32 @@ class MainViewModel : ViewModel() {
                         val isValid = info != null && info.isMeasuring() && info.measureRecordId == localMeasureId
                         
                         if (!isValid) {
-                            Log.w(TAG, "onTagPressed verification failed: actually not measuring.")
+                            Log.w(TAG, "onTagPressed background verification failed: actually not measuring.")
                             uiState = uiState.copy(
                                 isMeasuring = false, 
-                                isLoading = false, 
-                                error = "您現在並沒有在錄製中！" // Shows in snackbar
+                                tagFlowStep = TagFlowStep.IDLE, // Force close menu
+                                showNotMeasuringDialog = true
                             )
                             tokenManager.isMeasuring = false
-                            return@launch
                         } else {
                             uiState = uiState.copy(isMeasuring = true, isStatusVerified = true) 
                         }
                     } else {
-                        Log.w(TAG, "onTagPressed warning: server error, allowing offline tagging")
+                        Log.w(TAG, "onTagPressed warning: server error, continuing offline tagging")
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "onTagPressed check failed: ${e.message}, allowing offline tagging")
+                Log.e(TAG, "onTagPressed background check failed: ${e.message}, continuing offline tagging")
             }
-
-            uiState = uiState.copy(isLoading = false)
-
-            val now = System.currentTimeMillis() // Pure UTC
-            val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-            Log.d(TAG, "onTagPressed: start tag flow, measureRecordId=${tokenManager.measureRecordId}")
-            uiState = uiState.copy(
-                tagFlowStep = TagFlowStep.SYMPTOM_SELECTION,
-                tagTime = now,
-                tagTimeFormatted = formatter.format(Date(now)), // Local Taiwan Time
-                selectedSymptoms = emptyList(),
-                otherSymptom = "",
-                selectedExercise = -1
-            )
         }
+    }
+
+    fun dismissNotMeasuringDialog() {
+        uiState = uiState.copy(showNotMeasuringDialog = false)
+    }
+
+    fun dismissNetworkWarningDialog() {
+        uiState = uiState.copy(showNetworkWarningDialog = false)
     }
 
     fun toggleSymptom(symptomId: Int) {
@@ -373,7 +391,9 @@ class MainViewModel : ViewModel() {
                 val error = uploadResult.exceptionOrNull()
                 Log.e(TAG, "Auto-upload failed: ${error?.message}")
                 if (error != null && isNetworkError(error)) {
-                    uiState = uiState.copy(showSyncErrorBadge = true)
+                    uiState = uiState.copy(showSyncErrorBadge = true, showNetworkWarningDialog = true)
+                } else {
+                    uiState = uiState.copy(showNetworkWarningDialog = true)
                 }
             }
 

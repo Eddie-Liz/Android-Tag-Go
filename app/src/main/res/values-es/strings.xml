@@ -90,8 +90,9 @@
     <string name="please_fill_out_account_id_and_id_number">Please fill out Account ID and ID Number</string>
     <string name="account_id_and_id_number_does_not_allow_space_characters">Account ID and ID Number does not allow space characters.</string>
     <string name="sign_in_failed">Error de inicio de sesión</string>
-    <string name="invalid_institution_id_patient">ID de paciente de institucion invalido</string>
-    <string name="logout_failed">Error al cerrar sesion</string>
+    <string name="invalid_institution_id_patient">ID de paciente de institución no válido</string>
+    <string name="logout_failed">Error al cerrar sesión</string>
+    <string name="invalid_patient">ID de paciente no válido</string>
     <string name="virtual_tag">Etiqueta virtual</string>
     <string name="attention_colon">Atencion:</string>
     <string name="this_patient_id_has_duplicate_recordings">Este ID de paciente tiene grabaciones duplicadas en el mismo periodo. Verifique que el ID de paciente sea correcto y seleccione el SN del dispositivo para esta grabacion.</string>
@@ -99,4 +100,7 @@
     <string name="notice_label">Aviso:</string>
     <string name="cancel">Cancelar</string>
     <string name="notice_content">Esta ID de paciente tiene grabaciones duplicadas durante el mismo período. Confirme que la ID de paciente sea correcta y seleccione el SN del dispositivo para esta grabación.</string>
+    <string name="login_success">Inicio de sesión exitoso</string>
+    <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">¡Su dispositivo no está grabando actualmente, el evento no se puede marcar!</string>
+    <string name="error">Error</string>
 </resources>

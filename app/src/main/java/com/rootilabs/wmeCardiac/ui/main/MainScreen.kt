@@ -408,7 +408,9 @@ fun MainScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(stringResource(id = R.string.last_tag), color = Color(0xFFE0E0E0), fontSize = 14.sp)
+                                if (uiState.lastTagTime != null) {
+                                    Text(stringResource(id = R.string.last_tag), color = Color(0xFFE0E0E0), fontSize = 14.sp)
+                                }
                                 Text(
                                     text = uiState.lastTagTime ?: stringResource(id = R.string.no_records),
                                     color = Color.White,
@@ -418,7 +420,7 @@ fun MainScreen(
                             }
                             Box {
                                 Button(
-                                    onClick = onViewHistory,
+                                    onClick = { if (uiState.lastTagTime != null) onViewHistory() },
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF555555)),
                                     shape = RoundedCornerShape(4.dp),
                                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
@@ -438,6 +440,101 @@ fun MainScreen(
                             }
                         }
                     } // end main Column
+
+                    // Network Warning Dialog
+                    if (uiState.showNetworkWarningDialog) {
+                        androidx.compose.ui.window.Dialog(onDismissRequest = { viewModel.dismissNetworkWarningDialog() }) {
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color(0xFFF2F2F2),
+                                modifier = Modifier.fillMaxWidth(0.85f)
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = stringResource(id = R.string.warning),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(top = 20.dp, bottom = 8.dp)
+                                    )
+                                    Text(
+                                        text = stringResource(id = R.string.network_error_message),
+                                        fontSize = 14.sp,
+                                        color = Color.Black,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                        modifier = Modifier.padding(horizontal = 20.dp).padding(bottom = 20.dp)
+                                    )
+                                    HorizontalDivider(color = Color(0x3D3C3C43), thickness = 0.5.dp)
+                                    Text(
+                                        text = stringResource(id = android.R.string.ok),
+                                        fontSize = 17.sp,
+                                        color = Color(0xFF007AFF),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { viewModel.dismissNetworkWarningDialog() }
+                                            .padding(vertical = 14.dp),
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Not Measuring Dialog
+                    if (uiState.showNotMeasuringDialog) {
+                        androidx.compose.ui.window.Dialog(onDismissRequest = { viewModel.dismissNotMeasuringDialog() }) {
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color.White,
+                                modifier = Modifier.fillMaxWidth(0.9f)
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center,
+                                        modifier = Modifier.padding(top = 24.dp, bottom = 16.dp)
+                                    ) {
+                                        Image(
+                                            painter = painterResource(id = R.drawable.icon_warning),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = stringResource(R.string.warning),
+                                            fontSize = 18.sp,
+                                            color = Color(0xFFE53935),
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                    
+                                    Text(
+                                        text = stringResource(R.string.your_device_is_not_currently_recording_the_event_cannot_be_marked),
+                                        fontSize = 16.sp,
+                                        color = Color.Black,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 24.dp)
+                                    )
+                                    
+                                    Button(
+                                        onClick = { viewModel.dismissNotMeasuringDialog() },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(52.dp),
+                                        shape = RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF757575)),
+                                        contentPadding = PaddingValues(0.dp)
+                                    ) {
+                                        Text(stringResource(id = android.R.string.ok), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     // Tag Flow Overlay
                     if (tagFlowOpen) {
@@ -552,14 +649,18 @@ fun TagButton(isMeasuring: Boolean, onClick: () -> Unit, modifier: Modifier = Mo
                 .size(290.dp)
                 .scale(scale)
                 .pointerInput(isMeasuring) {
-                    if (isMeasuring) {
-                        detectTapGestures(
-                            onPress = {
+                    detectTapGestures(
+                        onPress = {
+                            if (isMeasuring) {
                                 isPressed = true
                                 tryAwaitRelease()
                                 isPressed = false
-                            },
-                            onTap = {
+                            } else {
+                                tryAwaitRelease()
+                            }
+                        },
+                        onTap = {
+                            if (isMeasuring) {
                                 scope.launch {
                                     if (vibrator.hasVibrator()) {
                                         val pattern = longArrayOf(0, 200, 100, 200, 100, 400)
@@ -588,9 +689,11 @@ fun TagButton(isMeasuring: Boolean, onClick: () -> Unit, modifier: Modifier = Mo
 
                                     onClick()
                                 }
+                            } else {
+                                onClick()
                             }
-                        )
-                    }
+                        }
+                    )
                 },
             contentScale = ContentScale.Fit
         )

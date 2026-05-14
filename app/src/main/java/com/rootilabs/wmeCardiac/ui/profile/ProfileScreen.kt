@@ -144,13 +144,14 @@ fun ProfileScreen(
                         Text(text = uiState.error!!, color = Color.Red, fontSize = 14.sp)
                     }
 
-                    Text(
-                        text = stringResource(id = R.string.version, tokenManager.appVersion),
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(bottom = 24.dp)
-                    )
                 }
+
+                Text(
+                    text = stringResource(id = R.string.version, tokenManager.appVersion),
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
             }
         }
     }
@@ -234,9 +235,9 @@ fun LogoutConfirmationDialog(
                             onClick = onDismiss,
                             modifier = Modifier.weight(1f).height(48.dp),
                             shape = RoundedCornerShape(4.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0E0E0))
+                            colors = ButtonDefaults.buttonColors(containerColor = TagGoGreen)
                         ) {
-                            Text(stringResource(id = R.string.no), color = Color.DarkGray, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(id = R.string.no), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         }
                         
                         Button(

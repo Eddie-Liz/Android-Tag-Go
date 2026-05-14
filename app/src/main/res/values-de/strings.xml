@@ -90,8 +90,9 @@
     <string name="please_fill_out_account_id_and_id_number">Bitte Konto-ID und ID-Nummer ausfüllen</string>
     <string name="account_id_and_id_number_does_not_allow_space_characters">Konto-ID und ID-Nummer dürfen keine Leerzeichen enthalten.</string>
     <string name="sign_in_failed">Anmeldung fehlgeschlagen</string>
-    <string name="invalid_institution_id_patient">Ungultige Institutionspatienten-ID</string>
+    <string name="invalid_institution_id_patient">Ungültige Institutionspatienten-ID</string>
     <string name="logout_failed">Abmeldung fehlgeschlagen</string>
+    <string name="invalid_patient">Ungültige Patienten-ID</string>
     <string name="virtual_tag">Virtueller Tag</string>
     <string name="attention_colon">Achtung:</string>
     <string name="this_patient_id_has_duplicate_recordings">Diese Patienten-ID hat doppelte Aufnahmen im selben Zeitraum. Bitte überprüfen Sie die Patienten-ID und wählen Sie die Geräte-SN für diese Aufnahme aus.</string>
@@ -99,4 +100,7 @@
     <string name="notice_label">Hinweis:</string>
     <string name="cancel">Abbrechen</string>
     <string name="notice_content">Diese Patienten-ID weist im selben Zeitraum doppelte Aufzeichnungen auf. Bitte bestätigen Sie, dass die Patienten-ID korrekt ist, und wählen Sie die SN des Geräts für diese Aufzeichnung aus.</string>
+    <string name="login_success">Anmeldung erfolgreich</string>
+    <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">Ihr Gerät zeichnet derzeit nicht auf, das Ereignis kann nicht markiert werden!</string>
+    <string name="error">Fehler</string>
 </resources>

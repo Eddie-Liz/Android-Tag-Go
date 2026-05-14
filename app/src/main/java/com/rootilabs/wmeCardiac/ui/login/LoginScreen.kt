@@ -39,6 +39,7 @@ import com.rootilabs.wmeCardiac.data.model.MeasurementInfo
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,8 +49,21 @@ fun LoginScreen(
 ) {
     val uiState = viewModel.uiState
 
+    var showSuccessDelay by remember { mutableStateOf(false) }
+
     LaunchedEffect(uiState.loginSuccess) {
-        if (uiState.loginSuccess) onLoginSuccess()
+        if (uiState.loginSuccess) {
+            showSuccessDelay = true
+            kotlinx.coroutines.delay(1000)
+            onLoginSuccess()
+        }
+    }
+
+    LaunchedEffect(uiState.error) {
+        if (uiState.error != null && uiState.error != "NOT_MEASURING" && uiState.error != "NO_DEVICE_RECORDING") {
+            kotlinx.coroutines.delay(2000)
+            viewModel.clearError()
+        }
     }
 
     if (uiState.showScanner) {
@@ -117,6 +131,7 @@ fun LoginScreen(
 
     if (uiState.showDeviceSheet) {
         DeviceSelectionSheet(
+            patientId = viewModel.patientId,
             measurements = uiState.measurements,
             onSelected = { viewModel.onMeasurementSelected(it) },
             onDismiss = { viewModel.onDismissDeviceSheet() }
@@ -131,26 +146,7 @@ fun LoginScreen(
         )
     }
 
-    // Transient Overlay Error (Black box with text)
-    if (uiState.transientErrorMessage != null) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Surface(
-                color = Color.Black.copy(alpha = 0.8f),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = if (uiState.transientErrorMessage == "ALREADY_LOGGED_IN") 
-                        stringResource(R.string.this_patient_has_been_logged_in) else uiState.transientErrorMessage,
-                    color = Color.White,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
-                )
-            }
-        }
-    }
+
 
     Column(
         modifier = Modifier
@@ -367,42 +363,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Error message
-            if (uiState.error != null) {
-                val errorText = when (uiState.error) {
-                    "FIELDS_REQUIRED"    -> stringResource(R.string.please_fill_out_account_id_and_id_number)
-                    "FIELDS_NO_SPACES"   -> stringResource(R.string.account_id_and_id_number_does_not_allow_space_characters)
-                    "ALREADY_SUBSCRIBED" -> stringResource(R.string.error_already_subscribed)
-                    "TOKEN_FAILED", "GET_TOKEN_FAILED" -> stringResource(R.string.sign_in_failed)
-                    "institution is not existed" -> stringResource(R.string.invalid_institution_id_patient)
-                    "MEASUREMENT_FAILED" -> stringResource(R.string.error_measurement_failed)
-                    "NOT_MEASURING"      , "NO_DEVICE_RECORDING" -> stringResource(R.string.no_device_has_started_recording)
-                    "UNSUPPORTED_MODE"   -> stringResource(R.string.error_unsupported_mode)
-                    "FATAL_ERROR"        -> stringResource(R.string.error_fatal)
-                    "ALREADY_LOGGED_IN"  -> stringResource(R.string.this_patient_has_been_logged_in)
-                    else                 -> {
-                        when {
-                            uiState.error.contains("institution is not existed") -> stringResource(R.string.invalid_institution_id_patient)
-                            uiState.error.contains("invalid_patient") -> stringResource(R.string.invalid_patient)
-                            else -> uiState.error
-                        }
-                    }
-                }
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFFCDD2)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = errorText,
-                        color = Color(0xFFB71C1C),
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-            }
+
 
             // Loading status
             if (uiState.isLoading) {
@@ -419,24 +380,6 @@ fun LoginScreen(
                 }
                 Spacer(modifier = Modifier.height(12.dp))
             }
-
-            // Login button
-            Button(
-                onClick = { viewModel.login() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                enabled = !uiState.isLoading,
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = TagGoGreen,
-                    disabledContainerColor = TagGoGreen.copy(alpha = 0.5f)
-                )
-            ) {
-                Text(stringResource(id = R.string.login), fontSize = 18.sp, color = Color.White)
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
 
             // App Version Display
             val context = androidx.compose.ui.platform.LocalContext.current
@@ -456,18 +399,149 @@ fun LoginScreen(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Login button
+            Button(
+                onClick = { viewModel.login() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                enabled = !uiState.isLoading,
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TagGoGreen,
+                    disabledContainerColor = TagGoGreen.copy(alpha = 0.5f)
+                )
+            ) {
+                Text(stringResource(id = R.string.login), fontSize = 18.sp, color = Color.White)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
             Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
+        }
+    }
+
+    // Overlays (Drawn last to be on top)
+    val displayError = uiState.error ?: uiState.transientErrorMessage
+    if (displayError != null) {
+        val errorText = when (displayError) {
+            "FIELDS_REQUIRED"    -> stringResource(R.string.please_fill_out_account_id_and_id_number)
+            "FIELDS_NO_SPACES"   -> stringResource(R.string.account_id_and_id_number_does_not_allow_space_characters)
+            "ALREADY_SUBSCRIBED" -> stringResource(R.string.error_already_subscribed)
+            "TOKEN_FAILED", "GET_TOKEN_FAILED" -> stringResource(R.string.sign_in_failed)
+            "institution is not existed", "INVALID_INSTITUTION_ID" -> stringResource(R.string.invalid_institution_id_patient)
+            "INVALID_PATIENT" -> stringResource(R.string.invalid_patient)
+            "MEASUREMENT_FAILED" -> stringResource(R.string.error_measurement_failed)
+            "NOT_MEASURING", "NO_DEVICE_RECORDING" -> stringResource(R.string.no_device_has_started_recording)
+            "UNSUPPORTED_MODE"   -> stringResource(R.string.error_unsupported_mode)
+            "FATAL_ERROR"        -> stringResource(R.string.error_fatal)
+            "ALREADY_LOGGED_IN"  -> stringResource(R.string.this_patient_has_been_logged_in)
+            "UNKNOWN_ERROR"      -> "Unknown Error"
+            else                 -> {
+                when {
+                    displayError.contains("institution is not existed", ignoreCase = true) -> stringResource(R.string.invalid_institution_id_patient)
+                    displayError.contains("invalid_patient", ignoreCase = true) -> stringResource(R.string.invalid_patient)
+                    else -> displayError
+                }
+            }
+        }
+        val isNoDeviceError = displayError == "NOT_MEASURING" || displayError == "NO_DEVICE_RECORDING"
+        
+        if (isNoDeviceError) {
+            androidx.compose.ui.window.Dialog(
+                onDismissRequest = { viewModel.clearError() },
+                properties = androidx.compose.ui.window.DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color(0xFFF2F2F2),
+                    modifier = Modifier.fillMaxWidth(0.9f)
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.error),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp,
+                            color = Color.Black,
+                            modifier = Modifier.padding(top = 20.dp, bottom = 4.dp)
+                        )
+                        Text(
+                            text = errorText,
+                            fontSize = 13.sp,
+                            color = Color.Black,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 20.dp)
+                        )
+                        HorizontalDivider(color = Color(0xFF3C3C43).copy(alpha = 0.36f), thickness = 0.5.dp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                                .clickable { viewModel.clearError() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "OK",
+                                color = Color(0xFF007AFF),
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
+                    color = Color.Black.copy(alpha = 0.8f),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = errorText,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
+
+    // Login Success Overlay
+    if (showSuccessDelay) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                color = Color.Black.copy(alpha = 0.8f),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.login_success),
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+                )
+            }
         }
     }
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceSelectionSheet(
+    patientId: String,
     measurements: List<MeasurementInfo>,
     onSelected: (MeasurementInfo) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var selectedItem by remember { mutableStateOf<MeasurementInfo?>(null) }
+    var selectedItem by remember { mutableStateOf(measurements.firstOrNull()) }
     
     // Using a custom Dialog for the exact look of the mockup
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
@@ -500,65 +574,104 @@ fun DeviceSelectionSheet(
                 
                 Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        stringResource(R.string.notice_label),
+                        stringResource(R.string.attention_colon),
                         fontWeight = FontWeight.Bold,
                         color = Color.Black,
                         fontSize = 20.sp,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                     )
+                    // Notice Text (Best of both worlds: fixed max width for consistent block shape)
                     Text(
-                        stringResource(R.string.notice_content),
+                        text = stringResource(R.string.this_patient_id_has_duplicate_recordings),
                         color = Color.Black,
                         fontSize = 16.sp,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .widthIn(max = 280.dp)
+                            .padding(horizontal = 8.dp),
+                        lineHeight = 22.sp
                     )
                 }
                 
-                // Selection List Box
+                // Selection List Box (iOS-style Wheel Picker)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp)
                         .padding(horizontal = 16.dp)
-                        .background(Color(0xFFF0F0F0)) // Light background for list
+                        .background(Color(0xFFF0F0F0)), // Light background
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+                    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+                    val snappingLayout = androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior(lazyListState = listState)
+                    val scope = rememberCoroutineScope()
+                    val density = androidx.compose.ui.platform.LocalDensity.current
+
+                    // Flawless, highly reactive scroll tracking
+                    LaunchedEffect(listState) {
+                        snapshotFlow { 
+                            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset 
+                        }.collect { (index, offset) ->
+                            val halfItemPx = with(density) { 22.dp.toPx() }
+                            val centerIndex = if (offset > halfItemPx) index + 1 else index
+                            
+                            if (centerIndex >= 0 && centerIndex < measurements.size) {
+                                val item = measurements[centerIndex]
+                                if (selectedItem?.deviceId != item.deviceId) {
+                                    selectedItem = item
+                                }
+                            }
+                        }
+                    }
+
+                    androidx.compose.foundation.lazy.LazyColumn(
+                        state = listState,
+                        flingBehavior = snappingLayout,
+                        modifier = Modifier.fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                        contentPadding = PaddingValues(vertical = 68.dp) // Adjusted for 180dp height
                     ) {
-                        measurements.forEach { info ->
+                        items(measurements.size) { index ->
+                            val info = measurements[index]
                             val isLogged = info.isPatientSubscribed == true
                             val displayText = if (isLogged) 
                                 "${info.deviceId} (${stringResource(R.string.has_been_logged_in)})" 
                                 else info.deviceId ?: "Unknown"
                                 
-                            val isSelected = selectedItem == info
+                            val isSelected = selectedItem?.deviceId == info.deviceId
                             
                             Box(
                                 modifier = Modifier
-                                    .padding(vertical = 4.dp)
-                                    .then(
-                                        if (isSelected) Modifier.border(1.dp, TagGoGreen, RoundedCornerShape(8.dp)).padding(horizontal = 12.dp, vertical = 4.dp)
-                                        else Modifier
-                                    )
-                                    .clickable { selectedItem = info },
+                                    .fillMaxWidth()
+                                    .height(44.dp)
+                                    .clickable { 
+                                        scope.launch {
+                                            listState.animateScrollToItem(index)
+                                        }
+                                    },
                                 contentAlignment = Alignment.Center
                             ) {
-                            Text(
-                                text = displayText,
-                                fontSize = if (isLogged) 18.sp else 22.sp,
-                                color = if (isSelected) Color.Gray else Color.LightGray,
-                                textAlign = TextAlign.Center,
-                                maxLines = 2,
-                                softWrap = true,
-                                lineHeight = 24.sp
-                            )
+                                Text(
+                                    text = displayText,
+                                    fontSize = if (isLogged) 16.sp else 20.sp,
+                                    color = if (isSelected) Color.Black else Color.Gray,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1,
+                                    lineHeight = 24.sp
+                                )
                             }
                         }
                     }
+                    
+                    // FIXED Green selection box in the middle
+                    Box(
+                        modifier = Modifier
+                            .width(260.dp)
+                            .height(40.dp)
+                            .border(1.dp, TagGoGreen, RoundedCornerShape(8.dp))
+                    )
                 }
                 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -576,7 +689,7 @@ fun DeviceSelectionSheet(
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
                     ) {
                         Text(
-                            text = stringResource(R.string.cancel), 
+                            text = stringResource(R.string.cancel).uppercase(), 
                             color = Color.White, 
                             fontSize = 18.sp,
                             maxLines = 1,
@@ -597,7 +710,7 @@ fun DeviceSelectionSheet(
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
                     ) {
                         Text(
-                            text = stringResource(R.string.confirm), 
+                            text = stringResource(R.string.confirm).uppercase(), 
                             color = Color.White, 
                             fontSize = 18.sp,
                             maxLines = 1,

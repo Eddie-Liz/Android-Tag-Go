@@ -8,7 +8,7 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="com.rootilabs.wmeCardiac" />
+                  <option name="appId" value="com.rootilabs.wmeCardiac2" />
                   <option name="mobileSdkAppId" value="1:268754616687:android:c84203eb93458f2318e89a" />
                   <option name="projectId" value="tag-and-go-5f995" />
                   <option name="projectNumber" value="268754616687" />

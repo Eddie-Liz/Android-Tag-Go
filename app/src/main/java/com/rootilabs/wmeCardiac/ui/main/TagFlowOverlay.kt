@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
@@ -162,12 +163,11 @@ private fun BoxScope.SymptomSelectionContent(
     val uiState = viewModel.uiState
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Text(
+        AutoResizedText(
             text = stringResource(id = R.string.symptoms_title),
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             fontWeight = FontWeight.Bold,
-            fontSize = 28.sp, // Reduced slightly for longer languages
-            lineHeight = 34.sp,
+            initialFontSize = 28.sp,
             color = Color(0xFF424242)
         )
 
@@ -210,7 +210,7 @@ private fun BoxScope.SymptomSelectionContent(
                         
                         Text(
                             text = stringResource(id = symptom.labelResId),
-                            fontSize = 18.sp, // Reduced (20 -> 18) for better fit
+                            fontSize = 16.sp, // Reduced (18 -> 16) for single-line fit
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF5B5B5B),
                             modifier = Modifier.weight(1f),
@@ -257,7 +257,7 @@ private fun BoxScope.SymptomSelectionContent(
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = stringResource(id = R.string.symptom_others),
-                    fontSize = 16.sp, // Reduced (17 -> 16)
+                    fontSize = 14.sp, // Reduced (16 -> 14) to avoid wrapping
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF5B5B5B),
                     modifier = Modifier.weight(1f) // Removed maxLines=1 to allow full display
@@ -329,12 +329,11 @@ private fun BoxScope.ExerciseSelectionContent(viewModel: MainViewModel) {
     val uiState = viewModel.uiState
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Text(
+        AutoResizedText(
             text = stringResource(id = R.string.intensity_title),
             modifier = Modifier.padding(16.dp),
             fontWeight = FontWeight.Bold,
-            fontSize = 32.sp,
-            lineHeight = 40.sp,
+            initialFontSize = 32.sp,
             color = Color(0xFF424242)
         )
         HorizontalDivider(color = Color(0xFFE0E0E0), thickness = 1.dp)
@@ -372,7 +371,7 @@ private fun BoxScope.ExerciseSelectionContent(viewModel: MainViewModel) {
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(stringResource(id = exercise.labelResId), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF5B5B5B))
+                            Text(stringResource(id = exercise.labelResId), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF5B5B5B), maxLines = 1)
                             Text(stringResource(id = exercise.descResId), fontSize = 13.sp, color = Color(0xFF616161))
                         }
                         if (isSelected) {
@@ -392,7 +391,7 @@ private fun BoxScope.ExerciseSelectionContent(viewModel: MainViewModel) {
 
         TagFlowBottomButtons(
             leftText = stringResource(id = R.string.cancel_tag),
-            rightText = stringResource(id = R.string.confirm),
+            rightText = stringResource(id = R.string.next_step),
             rightEnabled = uiState.selectedExercise >= 0,
             onLeft = { viewModel.cancelTagFlow() },
             onRight = { viewModel.goToConfirmation() }
@@ -553,7 +552,8 @@ private fun TagFlowBottomButtons(
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = TagGoGreen,
-                disabledContainerColor = Color(0xFFBDBDBD)
+                disabledContainerColor = TagGoGreen.copy(alpha = 0.5f),
+                disabledContentColor = Color.White
             ),
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
             elevation = ButtonDefaults.buttonElevation(0.dp)
@@ -603,4 +603,36 @@ private fun ConfirmationIconRow(icon: IconSource, text: String) {
             fontWeight = FontWeight.Thin
         )
     }
+}
+
+@Composable
+fun AutoResizedText(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
+    fontWeight: FontWeight? = null,
+    initialFontSize: androidx.compose.ui.unit.TextUnit = 28.sp
+) {
+    var resizedFontSize by remember { mutableStateOf(initialFontSize) }
+    var shouldDraw by remember { mutableStateOf(false) }
+
+    Text(
+        text = text,
+        color = color,
+        modifier = modifier.drawWithContent {
+            if (shouldDraw) {
+                drawContent()
+            }
+        },
+        softWrap = false,
+        fontSize = resizedFontSize,
+        fontWeight = fontWeight,
+        onTextLayout = { result ->
+            if (result.didOverflowWidth) {
+                resizedFontSize *= 0.95f
+            } else {
+                shouldDraw = true
+            }
+        }
+    )
 }

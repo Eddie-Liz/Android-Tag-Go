@@ -90,8 +90,9 @@
     <string name="please_fill_out_account_id_and_id_number">アカウントIDとID番号を入力してください</string>
     <string name="account_id_and_id_number_does_not_allow_space_characters">アカウントIDとID番号にスペースは使用できません。</string>
     <string name="sign_in_failed">サインイン失敗.</string>
-    <string name="invalid_institution_id_patient">無効な機関患者 ID</string>
+    <string name="invalid_institution_id_patient">無効な機関患者ID</string>
     <string name="logout_failed">ログアウトに失敗しました</string>
+    <string name="invalid_patient">無効な患者ID</string>
     <string name="virtual_tag">バーチャルタグ</string>
     <string name="attention_colon">ご注意:</string>
     <string name="this_patient_id_has_duplicate_recordings">この患者IDは同一期間に重複して録音されています。患者IDが正しいことを確認し、今回の録音に使用するデバイスSNを選択してください。</string>
@@ -99,4 +100,7 @@
     <string name="notice_label">ご注意:</string>
     <string name="cancel">キャンセル</string>
     <string name="notice_content">この患者IDは同一期間に重複して録音されています。患者IDが正しいことを確認し、今回の録音に使用するデバイスSNを選択してください。</string>
+    <string name="login_success">ログイン成功</string>
+    <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">デバイスは現在記録されていないため、イベントをマークできません！</string>
+    <string name="error">エラー</string>
 </resources>

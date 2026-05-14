@@ -49,6 +49,16 @@ class LoginViewModel : ViewModel() {
     var institutionId by mutableStateOf("")
     var patientId by mutableStateOf("")
     var selectedServer by mutableStateOf(ServerRegion.AP)
+    
+    init {
+        val savedUrl = ServiceLocator.tokenManager.serverUrl
+        if (savedUrl != null) {
+            val matched = ServerRegion.values().find { it.url == savedUrl }
+            if (matched != null) {
+                selectedServer = matched
+            }
+        }
+    }
 
     fun login() {
         if (institutionId.isBlank() || patientId.isBlank()) {
@@ -144,7 +154,7 @@ class LoginViewModel : ViewModel() {
         )
 
         if (info.isPatientSubscribed == true) {
-            uiState = uiState.copy(error = "ALREADY_LOGGED_IN", showAlreadyLoggedInAlert = true)
+            uiState = uiState.copy(isLoading = false, error = "ALREADY_LOGGED_IN", showAlreadyLoggedInAlert = true)
         } else {
             // Auto proceed to Phase 2 (Authentication)
             startPhase2(measureId)
@@ -240,6 +250,7 @@ class LoginViewModel : ViewModel() {
 
     fun onDismissAlreadyLoggedInAlert() {
         uiState = uiState.copy(
+            isLoading = false,
             showAlreadyLoggedInAlert = false,
             selectedMeasureRecordId = null,
             selectedDeviceId = null,
@@ -250,7 +261,11 @@ class LoginViewModel : ViewModel() {
     }
     
     fun onDismissDeviceSheet() {
-        uiState = uiState.copy(showDeviceSheet = false)
+        uiState = uiState.copy(isLoading = false, showDeviceSheet = false)
+    }
+
+    fun clearError() {
+        uiState = uiState.copy(error = null, transientErrorMessage = null)
     }
 
     fun onShowDeviceSheet() {
@@ -269,6 +284,7 @@ class LoginViewModel : ViewModel() {
 
     fun onServerSelected(region: ServerRegion) {
         selectedServer = region
+        ServiceLocator.tokenManager.serverUrl = region.url
         uiState = uiState.copy(showServerSheet = false)
     }
 

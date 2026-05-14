@@ -17,7 +17,7 @@
     <string name="tap_to_tag">按一下按鍵來標註事件</string>
     <string name="tag_flow_header">您剛剛按了標註！</string>
     <string name="retry_upload">重新上傳</string>
-    <string name="send">確定</string>
+    <string name="send">傳送</string>
     <string name="symptoms_title">1. 您感受到什麼症狀？</string>
     <string name="intensity_title">2.您剛剛的運動強度？</string>
     <string name="symptoms_label">您感受到的症狀</string>
@@ -27,7 +27,7 @@
     <string name="no">否</string>
     <string name="version">Tag&amp;Go 應用程式版本: %1$s</string>
     <string name="other_symptom">其他: %1$s</string>
-    <string name="no_records">尚無紀錄</string>
+    <string name="no_records">目前無標註資料</string>
     <string name="loading">載入中...</string>
     <string name="error_occurred">發生錯誤: %1$s</string>
     <string name="error_already_subscribed">此帳號已在其他裝置登入，請先在該裝置登出後再試。</string>
@@ -53,7 +53,7 @@
     <string name="symptom_shortness_of_breath">呼吸急促</string>
     <string name="symptom_headache">頭痛</string>
     <string name="symptom_nausea">噁心</string>
-    <string name="symptom_others">其他(請輸入其他症狀)</string>
+    <string name="symptom_others">其他（請輸入症狀）</string>
     
     <!-- Intensity -->
     <string name="intensity_high">高強度運動</string>
@@ -86,7 +86,7 @@
     <string name="duplicate_patient_id_detected">檢測到重複的病患 ID</string>
     <string name="duplicate_patient_id_detected_please_verify_before_setting">偵測到重複的 Patient ID，請確認後再設定。</string>
     <string name="no_device_has_started_recording">沒有任何裝置開始錄製。</string>
-    <string name="warning">錯誤</string>
+    <string name="warning">請注意</string>
     <string name="select_device">選擇裝置</string>
     <string name="check">查看</string>
     <string name="has_been_logged_in">使用中</string>
@@ -104,4 +104,7 @@
     <string name="virtual_tag">數位標記</string>
     <string name="attention_colon">請注意:</string>
     <string name="this_patient_id_has_duplicate_recordings">此病患ID於同一時段重複開錄。請確認病患ID正確，並選擇本次錄製的裝置SN。</string>
+    <string name="login_success">登入成功</string>
+    <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">您的裝置目前不在錄製中，無法標註事件喔！</string>
+    <string name="error">錯誤</string>
 </resources>

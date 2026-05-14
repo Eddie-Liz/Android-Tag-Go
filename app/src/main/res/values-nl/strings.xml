@@ -90,8 +90,9 @@
     <string name="please_fill_out_account_id_and_id_number">Vul alstublieft account-ID en ID-nummer in</string>
     <string name="account_id_and_id_number_does_not_allow_space_characters">Account-ID en ID-nummer staan geen spaties toe.</string>
     <string name="sign_in_failed">Aanmelden is mislukt</string>
-    <string name="invalid_institution_id_patient">Ongeldige institutie patient-ID</string>
+    <string name="invalid_institution_id_patient">Ongeldig patiënt-ID van instelling</string>
     <string name="logout_failed">Uitloggen mislukt</string>
+    <string name="invalid_patient">Ongeldig patiënt-ID</string>
     <string name="virtual_tag">Virtuele Tag</string>
     <string name="attention_colon">Let op:</string>
     <string name="this_patient_id_has_duplicate_recordings">Deze patient-ID heeft dubbele opnamen in dezelfde periode. Controleer of de patient-ID correct is en selecteer het apparaat-SN voor deze opname.</string>
@@ -99,4 +100,7 @@
     <string name="notice_label">Let op:</string>
     <string name="cancel">Annuleren</string>
     <string name="notice_content">Deze patiënt-ID heeft dubbele opnames in dezelfde periode. Controleer of de patiënt-ID correct is en selecteer het SN van het apparaat voor deze opname.</string>
+    <string name="login_success">Inloggen succesvol</string>
+    <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">Uw apparaat is momenteel niet aan het opnemen, de gebeurtenis kan niet worden gemarkeerd!</string>
+    <string name="error">Fout</string>
 </resources>
