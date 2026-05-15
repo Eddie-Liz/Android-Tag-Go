@@ -256,7 +256,7 @@ class LoginViewModel : ViewModel() {
             selectedDeviceId = null,
             selectedDeviceIsLoggedIn = false,
             error = null,
-            showDeviceSheet = true
+            showDeviceSheet = uiState.measurements.size > 1
         )
     }
     

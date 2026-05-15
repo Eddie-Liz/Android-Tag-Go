@@ -79,52 +79,26 @@ fun LoginScreen(
 
 
     if (uiState.showAlreadyLoggedInAlert) {
-        androidx.compose.ui.window.Dialog(onDismissRequest = { viewModel.onDismissAlreadyLoggedInAlert() }) {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                modifier = Modifier.fillMaxWidth(0.9f).wrapContentHeight()
+        LaunchedEffect(uiState.showAlreadyLoggedInAlert) {
+            kotlinx.coroutines.delay(2000)
+            viewModel.onDismissAlreadyLoggedInAlert()
+        }
+        
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                color = Color.Black.copy(alpha = 0.8f),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.padding(16.dp)
             ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(48.dp).background(TagGoGreen),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(stringResource(R.string.warning), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                    }
-                    
-                    Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            stringResource(R.string.warning),
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black,
-                            fontSize = 20.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                        )
-                        Text(
-                            stringResource(R.string.this_patient_has_been_logged_in),
-                            color = Color.Black,
-                            fontSize = 16.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Button(
-                            onClick = { viewModel.onDismissAlreadyLoggedInAlert() },
-                            modifier = Modifier.weight(1f).height(48.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = TagGoGreen),
-                            shape = RoundedCornerShape(4.dp)
-                        ) {
-                            Text(stringResource(id = R.string.confirm), color = Color.White, fontSize = 18.sp)
-                        }
-                    }
-                }
+                Text(
+                    text = stringResource(R.string.this_patient_has_been_logged_in),
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
