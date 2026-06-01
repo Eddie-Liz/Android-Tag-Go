@@ -337,14 +337,15 @@ fun MainScreen(
                                 .background(Color(0xFFE8E8E8)),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
+                            val dateFormatPattern = stringResource(id = R.string.date_format_pattern)
                             val currentTime = remember { mutableStateOf("") }
                             val currentDate = remember { mutableStateOf("") }
-                            LaunchedEffect(Unit) {
+                            LaunchedEffect(dateFormatPattern) {
                                 var counter = 0
                                 while (true) {
                                     val now = Date()
                                     currentTime.value = SimpleDateFormat("HH:mm", Locale.getDefault()).format(now)
-                                    currentDate.value = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(now)
+                                    currentDate.value = SimpleDateFormat(dateFormatPattern, Locale.getDefault()).format(now)
                                     kotlinx.coroutines.delay(1000)
                                 }
                             }

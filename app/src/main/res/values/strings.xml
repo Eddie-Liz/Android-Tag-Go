@@ -146,4 +146,5 @@
     <string name="this_patient_id_has_duplicate_recordings">This Patient ID has duplicate recordings in the same period. Please verify the Patient ID is correct and select the Device SN for this recording.</string>
     <string name="login_success">Login Successful</string>
     <string name="error">ERROR</string>
+    <string name="date_format_pattern">EEEE, MMMM d</string>
 </resources>
