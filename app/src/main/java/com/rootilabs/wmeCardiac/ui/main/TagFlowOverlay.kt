@@ -183,11 +183,13 @@ private fun BoxScope.SymptomSelectionContent(
             ) {
                 symptoms.forEachIndexed { index, symptom ->
                     val isSelected = uiState.selectedSymptoms.contains(symptom.id)
+                    val isDisabled = uiState.otherSymptom.isNotBlank()
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { viewModel.toggleSymptom(symptom.id) }
-                            .padding(vertical = 12.dp, horizontal = 16.dp),
+                            .clickable(enabled = !isDisabled) { viewModel.toggleSymptom(symptom.id) }
+                            .padding(vertical = 12.dp, horizontal = 16.dp)
+                            .graphicsLayer { alpha = if (isDisabled) 0.5f else 1f },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         val tint = Color(0xFF5B5B5B)

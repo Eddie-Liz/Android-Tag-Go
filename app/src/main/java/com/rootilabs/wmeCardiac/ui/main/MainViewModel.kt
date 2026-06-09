@@ -357,7 +357,15 @@ class MainViewModel : ViewModel() {
     }
 
     fun setOtherSymptom(text: String) {
-        uiState = uiState.copy(otherSymptom = text)
+        val newText = text.take(150)
+        if (newText.isNotBlank()) {
+            uiState = uiState.copy(
+                otherSymptom = newText,
+                selectedSymptoms = emptyList()
+            )
+        } else {
+            uiState = uiState.copy(otherSymptom = newText)
+        }
     }
 
     fun goToExerciseSelection() {
