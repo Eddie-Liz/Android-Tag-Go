@@ -82,6 +82,7 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
 
     // Observe lifecycle events to refresh status on resume
     DisposableEffect(lifecycleOwner) {
@@ -127,7 +128,7 @@ fun MainScreen(
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "請點選麥克風後說出您的症狀")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, context.getString(R.string.voice_prompt))
         }
         speechRecognizerLauncher.launch(intent)
     }
