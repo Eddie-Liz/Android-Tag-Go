@@ -9,16 +9,25 @@ AAB_SRC="$SCRIPT_DIR/app/build/outputs/bundle/release/app-release.aab"
 MAPPING_SRC="$SCRIPT_DIR/app/build/outputs/mapping/release/mapping.txt"
 APK_DIR="$SCRIPT_DIR/apk"
 
-# 自動遞增 versionCode
-CURRENT_CODE=$(grep -E '^\s*versionCode\s*=\s*[0-9]+' "$BUILD_GRADLE" | grep -oE '[0-9]+' | head -n1)
-if [ -z "$CURRENT_CODE" ]; then
-  echo "Error: cannot read versionCode from build.gradle.kts"
-  exit 1
+# 預設不進版號；帶 --bump / -b 才自動遞增 versionCode
+BUMP=false
+case "${1:-}" in
+  --bump|-b|bump) BUMP=true ;;
+esac
+
+if [ "$BUMP" = true ]; then
+  CURRENT_CODE=$(grep -E '^\s*versionCode\s*=\s*[0-9]+' "$BUILD_GRADLE" | grep -oE '[0-9]+' | head -n1)
+  if [ -z "$CURRENT_CODE" ]; then
+    echo "Error: cannot read versionCode from build.gradle.kts"
+    exit 1
+  fi
+  NEW_CODE=$((CURRENT_CODE + 1))
+  sed -i '' -E "s/^([[:space:]]*versionCode[[:space:]]*=[[:space:]]*)[0-9]+/\1$NEW_CODE/" "$BUILD_GRADLE"
+  echo "versionCode: $CURRENT_CODE → $NEW_CODE"
+  trap 'echo "Build failed, reverting versionCode to $CURRENT_CODE"; sed -i "" -E "s/^([[:space:]]*versionCode[[:space:]]*=[[:space:]]*)[0-9]+/\1$CURRENT_CODE/" "$BUILD_GRADLE"' ERR
+else
+  echo "versionCode: not bumped (use --bump to increment)"
 fi
-NEW_CODE=$((CURRENT_CODE + 1))
-sed -i '' -E "s/^([[:space:]]*versionCode[[:space:]]*=[[:space:]]*)[0-9]+/\1$NEW_CODE/" "$BUILD_GRADLE"
-echo "versionCode: $CURRENT_CODE → $NEW_CODE"
-trap 'echo "Build failed, reverting versionCode to $CURRENT_CODE"; sed -i "" -E "s/^([[:space:]]*versionCode[[:space:]]*=[[:space:]]*)[0-9]+/\1$CURRENT_CODE/" "$BUILD_GRADLE"' ERR
 
 # 從 build.gradle.kts 取得版本號
 VERSION=$(grep -E '^\s*versionName\s*=\s*"[^"]+"' "$BUILD_GRADLE" | sed 's/.*"\(.*\)".*/\1/')

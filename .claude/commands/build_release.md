@@ -2,11 +2,12 @@
 
 ## 步驟
 
-1. 從 `app/build.gradle.kts` 確認 `versionName`（腳本會自動遞增 `versionCode`）
+1. 從 `app/build.gradle.kts` 確認 `versionName`
 2. 用 tmux 執行 `.claude/commands/build_release.sh`：
    - socket: `${TMPDIR:-/tmp}/claude-tmux-sockets/claude.sock`
    - session 名稱: `build-release`
-   - 指令: `bash .claude/commands/build_release.sh`
+   - 預設（不進版號）: `bash .claude/commands/build_release.sh`
+   - 使用者明確要求進版號時才加旗標: `bash .claude/commands/build_release.sh --bump`（自動遞增 `versionCode`，build 失敗會還原）
 3. 每 60 秒用 `tmux capture-pane` 檢查進度，直到出現 `Done.` 或錯誤
 4. 完成後回報：
    - 版本號
