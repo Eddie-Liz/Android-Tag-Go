@@ -97,11 +97,11 @@
     <string name="invalid_patient">無効な患者ID</string>
     <string name="virtual_tag">バーチャルタグ</string>
     <string name="attention_colon">ご注意:</string>
-    <string name="this_patient_id_has_duplicate_recordings">この患者IDは同一期間に重複して録音されています。患者IDが正しいことを確認し、今回の録音に使用するデバイスSNを選択してください。</string>
+    <string name="this_patient_id_has_duplicate_recordings">この患者IDには、同一期間内に重複した記録が存在します。患者IDが正しいことを確認し、今回の記録に使用するデバイスSNを選択してください。</string>
     <string name="select_device">デバイスを選択</string>
     <string name="notice_label">ご注意:</string>
     <string name="cancel">キャンセル</string>
-    <string name="notice_content">この患者IDは同一期間に重複して録音されています。患者IDが正しいことを確認し、今回の録音に使用するデバイスSNを選択してください。</string>
+    <string name="notice_content">この患者IDには、同一期間内に重複した記録が存在します。患者IDが正しいことを確認し、今回の記録に使用するデバイスSNを選択してください。</string>
     <string name="network_error_message">サーバーに接続できません。ネットワーク接続を確認してから、もう一度お試しください。</string>
     <string name="what_symptoms_are_you_feeling">1. 感じている症状を選択してください?</string>
     <string name="login_success">ログイン成功</string>
@@ -109,4 +109,6 @@
     <string name="error">エラー</string>
     <string name="warning">警告</string>
     <string name="date_format_pattern">EEEE, MMMM d日</string>
+    <string name="this_patient_is_already_logged_in">この患者は既にログインしています。</string>
+    <string name="this_patient_has_been_logged_in">この患者は既にログインしています。</string>
 </resources>
