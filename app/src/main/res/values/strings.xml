@@ -116,6 +116,7 @@
     <string name="upload">Upload</string>
     <string name="upload_again">Upload Again</string>
     <string name="upload_failed">Upload Failed</string>
+    <string name="error_invalid_token">Login expired, please login again.</string>
     <string name="virtual_tag">Virtual Tag</string>
     <string name="walking">Walking</string>
     <string name="warning">Warning</string>

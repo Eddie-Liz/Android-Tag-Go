@@ -7,6 +7,7 @@ import com.rootilabs.wmeCardiac.data.api.AuthApi
 import com.rootilabs.wmeCardiac.data.api.RootiCareApi
 import com.rootilabs.wmeCardiac.data.auth.AuthInterceptor
 import com.rootilabs.wmeCardiac.data.auth.TokenManager
+import com.rootilabs.wmeCardiac.data.auth.TokenAuthenticator
 import com.rootilabs.wmeCardiac.data.local.AppDatabase
 import com.rootilabs.wmeCardiac.data.repository.RootiCareRepository
 import com.squareup.moshi.Moshi
@@ -87,6 +88,7 @@ object ServiceLocator {
         val mainClient = OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
+            .authenticator(TokenAuthenticator(tokenManager) { authApi })
             .addInterceptor(AuthInterceptor { tokenManager.accessToken })
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY

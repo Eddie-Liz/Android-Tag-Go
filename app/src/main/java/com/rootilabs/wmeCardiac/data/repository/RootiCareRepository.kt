@@ -443,6 +443,10 @@ class RootiCareRepository(
             return "ALREADY_LOGGED_IN"
         }
 
+        if (errorJson.contains("invalid_token", ignoreCase = true)) {
+            return "INVALID_TOKEN"
+        }
+
         return try {
             val adapter = moshi.adapter(ApiError::class.java)
             val error = adapter.fromJson(errorJson)
@@ -450,6 +454,7 @@ class RootiCareRepository(
                 "patient_already_subscribed" -> "ALREADY_LOGGED_IN"
                 "invalid_patient" -> "INVALID_PATIENT"
                 "invalid_institution_id" -> "INVALID_INSTITUTION_ID"
+                "invalid_token" -> "INVALID_TOKEN"
                 else -> error?.errorDescription ?: "UNKNOWN_ERROR"
             }
         } catch (e: Exception) {

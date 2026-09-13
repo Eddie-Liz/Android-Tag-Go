@@ -112,4 +112,5 @@
     <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">您的裝置目前不在錄製中，無法標註事件喔！</string>
     <string name="error">錯誤</string>
     <string name="date_format_pattern">EEEE, MMMM d日</string>
+    <string name="error_invalid_token">登入狀態已過期，請重新登入</string>
 </resources>

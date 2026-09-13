@@ -222,6 +222,7 @@ class MainViewModel : ViewModel() {
                             // We DO NOT force isMeasuring=false here anymore. 
                             // This allows this device to continue tagging into its locked localMeasureId,
                             // bypassing situations where a superseding session was created and then deleted.
+                            uiState = uiState.copy(isStatusVerified = true)
                         } else {
                             val serverStatus = info.isMeasuring()
                             val serverMeasureId = info.measureRecordId
@@ -289,9 +290,13 @@ class MainViewModel : ViewModel() {
     }
 
     fun onTagPressed() {
-        if (!uiState.isMeasuring) {
-            Log.w(TAG, "onTagPressed: ignored because isMeasuring is false, showing dialog")
-            uiState = uiState.copy(showNotMeasuringDialog = true)
+        if (!(uiState.isStatusVerified && uiState.isMeasuring)) {
+            Log.w(TAG, "onTagPressed: ignored because either not verified or not measuring, showing dialog")
+            if (!uiState.isStatusVerified) {
+                uiState = uiState.copy(showNetworkWarningDialog = true)
+            } else {
+                uiState = uiState.copy(showNotMeasuringDialog = true)
+            }
             return
         }
 

@@ -10,6 +10,7 @@ class AuthInterceptor(
     override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
         val originalRequest = chain.request()
         val token = tokenProvider()
+
         val requestBuilder = originalRequest.newBuilder()
             .addHeader("Content-Type", "application/json")
 
