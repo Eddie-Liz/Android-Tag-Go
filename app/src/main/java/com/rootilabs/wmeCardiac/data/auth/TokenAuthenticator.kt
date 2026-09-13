@@ -9,6 +9,17 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
 
+/**
+ * Re-issues the OAuth token when the server rejects a request with 401.
+ *
+ * The backend signs `client_credentials` tokens with a 1-day lifetime and the app has no
+ * proactive renewal, so without this the whole session dies silently once a day.
+ *
+ * IMPORTANT: [authApiProvider] must resolve to an API built on a *separate* OkHttpClient that
+ * does NOT carry this authenticator. Sharing one client would deadlock — the blocking refresh
+ * below occupies one of the dispatcher's `maxRequestsPerHost` (default 5) slots, so 5 concurrent
+ * 401s would leave no slot for the refresh call itself. See ServiceLocator.initApis().
+ */
 class TokenAuthenticator(
     private val tokenManager: TokenManager,
     private val authApiProvider: () -> AuthApi
@@ -16,63 +27,58 @@ class TokenAuthenticator(
 
     companion object {
         private const val TAG = "TokenAuthenticator"
+        private const val BEARER_PREFIX = "Bearer "
     }
 
     override fun authenticate(route: Route?, response: Response): Request? {
-        val oldToken = tokenManager.accessToken
-        Log.w(TAG, "========== TOKEN EXPIRED (401) ==========")
-        Log.w(TAG, "401 detected for request: ${response.request.url}, attempting to refresh token...")
-        
-        // Prevent infinite loop if the refresh token itself is unauthorized 
-        if (response.responseCount > 1) {
-            Log.e(TAG, "Token refresh failed or looping. Stop retrying.")
+        // Only ever retry once: priorResponse is non-null on the follow-up of an earlier 401.
+        if (response.priorResponse != null) {
+            Log.e(TAG, "Refreshed token was rejected as well, giving up on ${response.request.url}")
             return null
         }
 
-        val authApi = authApiProvider()
-        return try {
-            val tokenResponse = runBlocking {
-                authApi.getToken(
-                    basicAuth = Constants.BASIC_AUTH,
-                    body = mapOf("grant_type" to "client_credentials")
-                )
+        val usedToken = response.request.header("Authorization")?.removePrefix(BEARER_PREFIX)
+
+        // Serialized: concurrent 401s would otherwise each fire their own /oauth/token request and
+        // overwrite each other's result in SharedPreferences.
+        synchronized(this) {
+            val currentToken = tokenManager.accessToken
+            if (!currentToken.isNullOrBlank() && currentToken != usedToken) {
+                // Another thread already refreshed while this request was in flight.
+                Log.d(TAG, "Token was refreshed by another request, retrying with it")
+                return response.request.newBuilder()
+                    .header("Authorization", BEARER_PREFIX + currentToken)
+                    .build()
             }
-            
-            if (tokenResponse.isSuccessful) {
-                val newToken = tokenResponse.body()?.accessToken
-                if (newToken != null) {
-                    tokenManager.accessToken = newToken
-                    val oldPreview = oldToken?.takeLast(6) ?: "null"
-                    val newPreview = newToken.takeLast(6)
-                    Log.w(TAG, "Token refreshed successfully! (Old ends with: $oldPreview -> New ends with: $newPreview)")
-                    Log.w(TAG, "=========================================")
-                    
-                    // Retry the request with the new token
-                    response.request.newBuilder()
-                        .header("Authorization", "Bearer $newToken")
-                        .build()
-                } else {
-                    Log.e(TAG, "New token is null.")
-                    null
+
+            Log.d(TAG, "401 on ${response.request.url}, refreshing token")
+            val newToken = try {
+                val tokenResponse = runBlocking {
+                    authApiProvider().getToken(
+                        basicAuth = Constants.BASIC_AUTH,
+                        body = mapOf("grant_type" to "client_credentials")
+                    )
                 }
-            } else {
-                Log.e(TAG, "Failed to refresh token: HTTP ${tokenResponse.code()}")
-                null
+                if (!tokenResponse.isSuccessful) {
+                    Log.e(TAG, "Token refresh failed: HTTP ${tokenResponse.code()}")
+                    return null
+                }
+                tokenResponse.body()?.accessToken
+            } catch (e: Exception) {
+                Log.e(TAG, "Token refresh failed", e)
+                return null
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Exception during token refresh", e)
-            null
+
+            if (newToken.isNullOrBlank()) {
+                Log.e(TAG, "Token refresh returned an empty token")
+                return null
+            }
+
+            tokenManager.accessToken = newToken
+            Log.d(TAG, "Token refreshed, retrying request")
+            return response.request.newBuilder()
+                .header("Authorization", BEARER_PREFIX + newToken)
+                .build()
         }
     }
-    
-    private val Response.responseCount: Int
-        get() {
-            var result = 1
-            var prior = priorResponse
-            while (prior != null) {
-                result++
-                prior = prior.priorResponse
-            }
-            return result
-        }
 }

@@ -368,7 +368,7 @@ fun MainScreen(
                             )
 
                             Text(
-                                text = if (uiState.isStatusVerified && uiState.isMeasuring) 
+                                text = if (uiState.canTag) 
                                     stringResource(id = R.string.tap_to_tag) 
                                 else 
                                     stringResource(id = R.string.no_recording),
@@ -380,7 +380,7 @@ fun MainScreen(
                             )
 
                             TagButton(
-                                isMeasuring = uiState.isStatusVerified && uiState.isMeasuring,
+                                isMeasuring = uiState.canTag,
                                 onClick = { viewModel.onTagPressed() },
                                 modifier = Modifier
                                     .offset(y = (-10).dp)

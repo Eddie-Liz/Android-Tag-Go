@@ -141,10 +141,10 @@ fun HistoryScreen(
             uploadError?.let { error ->
                 val localizedError = when (error) {
                     "INVALID_TOKEN" -> stringResource(id = R.string.error_invalid_token)
-                    "ALREADY_LOGGED_IN" -> stringResource(id = R.string.this_patient_is_already_logged_in)
+                    "ALREADY_LOGGED_IN" -> stringResource(id = R.string.this_patient_has_been_logged_in)
                     "INVALID_PATIENT" -> stringResource(id = R.string.invalid_patient)
                     "INVALID_INSTITUTION_ID" -> stringResource(id = R.string.invalid_institution_id_patient)
-                    else -> error
+                    else -> stringResource(id = R.string.error_upload_failed)
                 }
                 Text(
                     text = localizedError,

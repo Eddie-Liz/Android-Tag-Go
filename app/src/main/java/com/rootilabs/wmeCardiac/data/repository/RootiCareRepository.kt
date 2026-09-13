@@ -348,14 +348,7 @@ class RootiCareRepository(
                 tags = tags.map { it.toVirtualTagRequest() }
             )
 
-            // Debug: 印出實際送出的資料
-            request.tags.forEachIndexed { i, tag ->
-                Log.d(TAG, "=== Tag[$i] Upload Payload ===")
-                Log.d(TAG, "  tagTime: ${tag.tagTime}")
-                Log.d(TAG, "  exerciseIntensity: ${tag.exerciseIntensity}")
-                Log.d(TAG, "  symptomTypes.symptomTypes(${tag.symptomTypes?.symptomTypes?.size ?: 0}個): ${tag.symptomTypes?.symptomTypes}")
-                Log.d(TAG, "  symptomTypes.others: ${tag.symptomTypes?.others}")
-            }
+            Log.d(TAG, "Uploading ${request.tags.size} virtual tag(s)")
 
             val result = rootiCareApi.addVirtualEventTags(
                 institutionId = institutionId,

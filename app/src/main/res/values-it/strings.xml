@@ -108,4 +108,10 @@
     <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">Il tuo dispositivo non sta registrando al momento, l\'evento non può essere contrassegnato!</string>
     <string name="error">Errore</string>
     <string name="warning">Avviso</string>
+    <string name="error_invalid_token">Sessione scaduta, effettua nuovamente l\'accesso.</string>
+    <string name="error_upload_failed">Caricamento non riuscito. Riprova più tardi.</string>
+    <string name="upload">Carica</string>
+    <string name="you_still_have_data_not_uploaded_confirm_logout">Ci sono ancora dati non caricati. Vuoi davvero disconnetterti?</string>
+    <string name="this_patient_has_been_logged_in">Questo paziente ha già effettuato l\'accesso.</string>
+    <string name="date_format_pattern">EEEE d MMMM</string>
 </resources>

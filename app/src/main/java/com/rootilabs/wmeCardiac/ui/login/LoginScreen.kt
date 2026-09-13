@@ -410,6 +410,7 @@ fun LoginScreen(
             "UNSUPPORTED_MODE"   -> stringResource(R.string.error_unsupported_mode)
             "FATAL_ERROR"        -> stringResource(R.string.error_fatal)
             "ALREADY_LOGGED_IN"  -> stringResource(R.string.this_patient_has_been_logged_in)
+            "INVALID_TOKEN"      -> stringResource(R.string.error_invalid_token)
             "UNKNOWN_ERROR"      -> "Unknown Error"
             else                 -> {
                 when {

@@ -77,6 +77,8 @@ android {
     }
     buildFeatures {
         compose = true
+        // Required for BuildConfig.DEBUG, used to keep HTTP body logging out of release builds.
+        buildConfig = true
     }
 }
 

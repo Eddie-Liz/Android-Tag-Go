@@ -10,6 +10,11 @@ import com.rootilabs.wmeCardiac.di.ServiceLocator
 import kotlinx.coroutines.launch
 
 class HistoryViewModel : ViewModel() {
+
+    companion object {
+        private const val UPLOAD_FAILED = "UPLOAD_FAILED"
+    }
+
     private val repository get() = ServiceLocator.repository
 
     var tags by mutableStateOf<List<EventTagDbEntity>>(emptyList())
@@ -43,10 +48,12 @@ class HistoryViewModel : ViewModel() {
                 if (result.isSuccess) {
                     uploadError = null
                 } else {
-                    uploadError = result.exceptionOrNull()?.message ?: "上傳失敗，請稍後再試"
+                    // Raw exception text (server English, host names, stack messages) must not reach
+                    // the UI; HistoryScreen maps known codes and falls back to a localized message.
+                    uploadError = result.exceptionOrNull()?.message ?: UPLOAD_FAILED
                 }
             } catch (e: Exception) {
-                uploadError = e.message ?: "上傳失敗，請稍後再試"
+                uploadError = e.message ?: UPLOAD_FAILED
             } finally {
                 isSyncing = false
                 loadTags() // Always reload to reflect actual DB state

@@ -113,4 +113,5 @@
     <string name="error">錯誤</string>
     <string name="date_format_pattern">EEEE, MMMM d日</string>
     <string name="error_invalid_token">登入狀態已過期，請重新登入</string>
+    <string name="error_upload_failed">上傳失敗，請稍後再試</string>
 </resources>

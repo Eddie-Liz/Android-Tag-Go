@@ -108,4 +108,10 @@
     <string name="your_device_is_not_currently_recording_the_event_cannot_be_marked">¡Su dispositivo no está grabando actualmente, el evento no se puede marcar!</string>
     <string name="error">Error</string>
     <string name="warning">Advertencia</string>
+    <string name="error_invalid_token">La sesión ha caducado, vuelva a iniciar sesión.</string>
+    <string name="error_upload_failed">Error al subir. Inténtelo de nuevo más tarde.</string>
+    <string name="upload">Subir</string>
+    <string name="you_still_have_data_not_uploaded_confirm_logout">Todavía hay datos sin subir. ¿Seguro que desea cerrar sesión?</string>
+    <string name="this_patient_has_been_logged_in">Este paciente ya ha iniciado sesión.</string>
+    <string name="date_format_pattern">EEEE, d \'de\' MMMM</string>
 </resources>

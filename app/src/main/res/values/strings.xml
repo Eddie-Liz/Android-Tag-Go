@@ -111,7 +111,6 @@
     <string name="tag_time">Tag time:</string>
     <string name="the_latest_tag_time">The latest tag time:</string>
     <string name="this_measurement_record_was_abandoned">This measurement record was abandoned.</string>
-    <string name="this_patient_is_already_logged_in">This patient is already logged in.</string>
     <string name="up_and_down_stairs_normal_walking_etc">Up and down stairs, normal walking, etc.</string>
     <string name="upload">Upload</string>
     <string name="upload_again">Upload Again</string>
@@ -148,4 +147,5 @@
     <string name="login_success">Login Successful</string>
     <string name="error">ERROR</string>
     <string name="date_format_pattern">EEEE, MMMM d</string>
+    <string name="error_upload_failed">Upload failed. Please try again later.</string>
 </resources>

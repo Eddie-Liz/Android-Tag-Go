@@ -2,6 +2,7 @@ package com.rootilabs.wmeCardiac.di
 
 import android.content.Context
 import androidx.room.Room
+import com.rootilabs.wmeCardiac.BuildConfig
 import com.rootilabs.wmeCardiac.Constants
 import com.rootilabs.wmeCardiac.data.api.AuthApi
 import com.rootilabs.wmeCardiac.data.api.RootiCareApi
@@ -68,13 +69,12 @@ object ServiceLocator {
             .add(KotlinJsonAdapterFactory())
             .build()
 
-        // Auth OkHttp (no bearer token)
+        // Auth OkHttp (no bearer token, and deliberately no authenticator — see TokenAuthenticator)
         val authClient = OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
-            .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
-            })
+            .callTimeout(45, TimeUnit.SECONDS)
+            .addInterceptor(httpLoggingInterceptor())
             .build()
 
         authApi = Retrofit.Builder()
@@ -88,11 +88,12 @@ object ServiceLocator {
         val mainClient = OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
+            // Bounds the worst case of 401 -> refresh -> retry, which chains three
+            // connect+read budgets and would otherwise leave the UI blocked for minutes.
+            .callTimeout(90, TimeUnit.SECONDS)
             .authenticator(TokenAuthenticator(tokenManager) { authApi })
             .addInterceptor(AuthInterceptor { tokenManager.accessToken })
-            .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
-            })
+            .addInterceptor(httpLoggingInterceptor())
             .build()
 
         rootiCareApi = Retrofit.Builder()
@@ -110,6 +111,21 @@ object ServiceLocator {
             moshi = moshi
         )
     }
+
+    /**
+     * Body-level logging prints the Basic auth header, the Bearer token and every response body
+     * (patient ids, event tags and symptom text) to logcat. That is readable by anyone who can run
+     * `adb logcat` or export a bug report, so release builds must stay silent.
+     */
+    private fun httpLoggingInterceptor(): HttpLoggingInterceptor =
+        HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
+            redactHeader("Authorization")
+        }
 
     private fun initDatabase(): AppDatabase {
         database = Room.databaseBuilder(

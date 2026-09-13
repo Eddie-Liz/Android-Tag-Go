@@ -73,10 +73,20 @@ data class MainUiState(
     val hasUnsyncedTags: Boolean = false,
     val showSyncErrorBadge: Boolean = false,
     val loginTimeDisplay: String = "",
-    val isStatusVerified: Boolean = false,
     val showNotMeasuringDialog: Boolean = false,
     val showNetworkWarningDialog: Boolean = false
-)
+) {
+    /**
+     * Single source of truth for both the tag button's appearance and its click gate.
+     *
+     * Local-first by design: only the last known recording state matters. A status
+     * query that is still in flight or that failed must NOT block tagging — the tag
+     * timestamp is produced locally and the upload is deferred, so gating on
+     * "server confirmed" would permanently lose the event whenever the device is
+     * offline at cold start.
+     */
+    val canTag: Boolean get() = isMeasuring
+}
 
 class MainViewModel : ViewModel() {
     companion object {
@@ -115,6 +125,15 @@ class MainViewModel : ViewModel() {
                     if (!uiState.showNetworkWarningDialog) {
                         uiState = uiState.copy(showNetworkWarningDialog = true)
                     }
+                }
+            }
+
+            override fun onAvailable(network: android.net.Network) {
+                super.onAvailable(network)
+                Log.d(TAG, "Network available, refreshing recording status")
+                viewModelScope.launch {
+                    uiState = uiState.copy(showNetworkWarningDialog = false)
+                    checkRecordingStatus()
                 }
             }
         }
@@ -222,7 +241,6 @@ class MainViewModel : ViewModel() {
                             // We DO NOT force isMeasuring=false here anymore. 
                             // This allows this device to continue tagging into its locked localMeasureId,
                             // bypassing situations where a superseding session was created and then deleted.
-                            uiState = uiState.copy(isStatusVerified = true)
                         } else {
                             val serverStatus = info.isMeasuring()
                             val serverMeasureId = info.measureRecordId
@@ -259,19 +277,13 @@ class MainViewModel : ViewModel() {
                             } else {
                                 Log.d(TAG, "Ignoring server status change ($serverStatus). Server active session is not our locked session.")
                             }
-                            
-                            
-                            // State is verified after successful API return
-                            uiState = uiState.copy(isStatusVerified = true)
                         }
                     } else {
                         // Exception from server (e.g. 400, 401, network disconnection)
                         // Treat these as temporary to allow offline tagging or keep current active state
                         Log.w(TAG, "checkRecordingStatus failed: ${result.exceptionOrNull()?.message}, keeping current local state")
                         val error = result.exceptionOrNull()
-                        if (error != null && isNetworkError(error)) {
-                            uiState = uiState.copy(showNetworkWarningDialog = true)
-                        } else if (error == null || error.message?.contains("Unable to resolve host", ignoreCase = true) == true) {
+                        if (error == null || isNetworkError(error)) {
                             uiState = uiState.copy(showNetworkWarningDialog = true)
                         }
                     }
@@ -279,8 +291,6 @@ class MainViewModel : ViewModel() {
             } catch (e: Exception) {
                 Log.e(TAG, "checkRecordingStatus failed: ${e.message}")
                 if (isNetworkError(e)) {
-                    uiState = uiState.copy(showNetworkWarningDialog = true)
-                } else if (e.message?.contains("Unable to resolve host", ignoreCase = true) == true) {
                     uiState = uiState.copy(showNetworkWarningDialog = true)
                 }
             } finally {
@@ -290,13 +300,9 @@ class MainViewModel : ViewModel() {
     }
 
     fun onTagPressed() {
-        if (!(uiState.isStatusVerified && uiState.isMeasuring)) {
-            Log.w(TAG, "onTagPressed: ignored because either not verified or not measuring, showing dialog")
-            if (!uiState.isStatusVerified) {
-                uiState = uiState.copy(showNetworkWarningDialog = true)
-            } else {
-                uiState = uiState.copy(showNotMeasuringDialog = true)
-            }
+        if (!uiState.canTag) {
+            Log.w(TAG, "onTagPressed: ignored because the recording is known to be inactive")
+            uiState = uiState.copy(showNotMeasuringDialog = true)
             return
         }
 
@@ -323,18 +329,27 @@ class MainViewModel : ViewModel() {
                     val result = repository.getCurrentMeasurement(institutionId, patientId, localMeasureId)
                     if (result.isSuccess) {
                         val info = result.getOrNull()
-                        val isValid = info != null && info.isMeasuring() && info.measureRecordId == localMeasureId
-                        
-                        if (!isValid) {
-                            Log.w(TAG, "onTagPressed background verification failed: actually not measuring.")
-                            uiState = uiState.copy(
-                                isMeasuring = false, 
-                                tagFlowStep = TagFlowStep.IDLE, // Force close menu
-                                showNotMeasuringDialog = true
-                            )
-                            tokenManager.isMeasuring = false
-                        } else {
-                            uiState = uiState.copy(isMeasuring = true, isStatusVerified = true) 
+                        when {
+                            // 404, or the server's active session is not the one we locked at login.
+                            // Same policy as checkRecordingStatus(): keep the local locked state and
+                            // only log it. Closing here would permanently disable tagging, because
+                            // nothing in the 404 path ever sets isMeasuring back to true.
+                            info == null || info.measureRecordId != localMeasureId -> {
+                                Log.w(TAG, "onTagPressed verification: server session is not our locked session (serverMeasureId=${info?.measureRecordId}, local=$localMeasureId). Keeping local state.")
+                            }
+                            // Our own session, and the server says it is no longer recording.
+                            !info.isMeasuring() -> {
+                                Log.w(TAG, "onTagPressed verification: our session is no longer recording, closing tag flow.")
+                                uiState = uiState.copy(
+                                    isMeasuring = false,
+                                    tagFlowStep = TagFlowStep.IDLE, // Force close menu
+                                    showNotMeasuringDialog = true
+                                )
+                                tokenManager.isMeasuring = false
+                            }
+                            else -> {
+                                uiState = uiState.copy(isMeasuring = true)
+                            }
                         }
                     } else {
                         Log.w(TAG, "onTagPressed warning: server error, continuing offline tagging")

@@ -109,6 +109,9 @@
     <string name="error">エラー</string>
     <string name="warning">警告</string>
     <string name="date_format_pattern">EEEE, MMMM d日</string>
-    <string name="this_patient_is_already_logged_in">この患者は既にログインしています。</string>
     <string name="this_patient_has_been_logged_in">この患者は既にログインしています。</string>
+    <string name="error_invalid_token">ログインの有効期限が切れました。再度ログインしてください。</string>
+    <string name="error_upload_failed">アップロードに失敗しました。しばらくしてからもう一度お試しください。</string>
+    <string name="upload">アップロード</string>
+    <string name="you_still_have_data_not_uploaded_confirm_logout">アップロードされていないデータがあります。ログアウトしてもよろしいですか？</string>
 </resources>

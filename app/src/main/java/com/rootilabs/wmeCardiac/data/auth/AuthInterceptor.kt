@@ -18,10 +18,6 @@ class AuthInterceptor(
             requestBuilder.addHeader("Authorization", "Bearer $token")
         }
 
-        val request = requestBuilder.build()
-        android.util.Log.d("AuthInterceptor", "Request: ${request.method} ${request.url}")
-        android.util.Log.d("AuthInterceptor", "Headers: ${request.headers}")
-        
-        return chain.proceed(request)
+        return chain.proceed(requestBuilder.build())
     }
 }
