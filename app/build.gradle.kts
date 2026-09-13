@@ -36,8 +36,8 @@ android {
         applicationId = "com.rootilabs.wmeCardiac2"
         minSdk = 24
         targetSdk = 36
-        versionCode = 26
-        versionName = "1.0.17"
+        versionCode = 27
+        versionName = "1.0.18"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
