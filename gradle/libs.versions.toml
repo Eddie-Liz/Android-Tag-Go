@@ -10,6 +10,7 @@ kotlin = "2.2.10"
 composeBom = "2024.09.00"
 googleServices = "4.4.2"
 firebaseAppDistribution = "5.2.1"
+gradlePlayPublisher = "4.1.1"
 
 
 [libraries]
@@ -34,4 +35,5 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppDistribution" }
+triplet-play = { id = "com.github.triplet.play", version.ref = "gradlePlayPublisher" }
 

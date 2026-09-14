@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.appdistribution)
+    alias(libs.plugins.triplet.play)
     id("com.google.devtools.ksp") version "2.3.2"
 }
 
@@ -80,6 +81,20 @@ android {
         // Required for BuildConfig.DEBUG, used to keep HTTP body logging out of release builds.
         buildConfig = true
     }
+}
+
+// Google Play upload. Stays disabled when the credential file is absent so that debug builds
+// and machines without publishing rights are unaffected.
+val playCredentials = rootProject.file("play-service-account.json")
+
+play {
+    enabled.set(playCredentials.exists())
+    if (playCredentials.exists()) {
+        serviceAccountCredentials.set(playCredentials)
+    }
+    defaultToAppBundles.set(true)
+    track.set("internal")
+    releaseStatus.set(com.github.triplet.gradle.androidpublisher.ReleaseStatus.COMPLETED)
 }
 
 dependencies {
