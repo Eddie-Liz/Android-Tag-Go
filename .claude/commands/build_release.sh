@@ -11,7 +11,7 @@ APK_DIR="$SCRIPT_DIR/apk"
 PLAY_CREDENTIALS="$SCRIPT_DIR/play-service-account.json"
 
 BUMP=false
-PUBLISH=false
+PUBLISH=true
 PROMOTE=true
 PROMOTE_TRACK="rooti"
 
@@ -19,13 +19,16 @@ usage() {
   cat <<'USAGE'
 Usage: build_release.sh [options]
 
-  --bump, -b             Increment versionCode before building (reverted if the build fails)
-  --publish, -p          Upload the AAB to the Play internal testing track, then promote it
-  --promote-track <id>   Closed testing track to promote to (default: rooti); implies --publish
-  --no-promote           With --publish, stop after the internal upload
-  --help, -h             Show this message
+Default (no options): build at the version already in build.gradle.kts, upload to the Play
+internal testing track, then promote to the rooti closed track. The version bump is a separate
+step in this project, so it is opt-in rather than default.
 
-With no options the script only builds and copies artifacts, exactly as before.
+  --bump, -b             Increment versionCode before building (reverted if the build fails)
+  --no-publish           Build and copy artifacts only; do not touch Google Play
+  --publish, -p          Upload to Play (the default; accepted for explicitness)
+  --promote-track <id>   Closed testing track to promote to (default: rooti); allowed: rooti, internal
+  --no-promote           Upload to internal testing but stop before promoting
+  --help, -h             Show this message
 USAGE
 }
 
@@ -33,6 +36,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --bump|-b|bump) BUMP=true ;;
     --publish|-p) PUBLISH=true ;;
+    --no-publish) PUBLISH=false ;;
     --promote-track)
       PUBLISH=true
       # `${2:?}` only rejects empty/unset, so `--promote-track --bump` would silently swallow
@@ -64,6 +68,7 @@ done
 # later costs a whole build cycle. Without the file the Play tasks are not even registered.
 if [ "$PUBLISH" = true ] && [ ! -f "$PLAY_CREDENTIALS" ]; then
   echo "Error: Play service account key not found at $PLAY_CREDENTIALS"
+  echo "Uploading is the default; pass --no-publish to build without touching Play."
   echo
   echo "The key belongs to service account:"
   echo "  play-publisher@tag-and-go-publisher.iam.gserviceaccount.com"

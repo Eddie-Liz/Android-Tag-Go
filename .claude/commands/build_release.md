@@ -10,14 +10,16 @@
 
    | 使用者要求 | 指令 |
    |---|---|
-   | 只建置（預設） | `bash .claude/commands/build_release.sh` |
-   | 進版號 | 加 `--bump`（自動遞增 `versionCode`，build 失敗會還原） |
-   | 上傳 Google Play | 加 `--publish`（上傳內部測試後自動升級到封閉測試） |
-   | 指定封閉測試軌道 | 加 `--promote-track <id>`（預設 `rooti`，只接受 `rooti` / `internal`，此旗標本身即隱含 `--publish`） |
-   | 只上傳內部測試、不升級 | 加 `--publish --no-promote` |
+   | **預設**：照現有版號建置並上傳 | `bash .claude/commands/build_release.sh` |
+   | 進版號後建置並上傳 | 加 `--bump`（自動遞增 `versionCode`，build 失敗會還原） |
+   | 只建置、不碰 Play | 加 `--no-publish` |
+   | 指定封閉測試軌道 | 加 `--promote-track <id>`（預設 `rooti`，只接受 `rooti` / `internal`） |
+   | 只上傳內部測試、不升級 | 加 `--no-promote` |
+
+   **預設就會上傳。** 進版號在這個專案是獨立的一步（慣例是先單獨提交一個 `Chore: Bump version to X`），所以 `--bump` 是選配而非預設；反過來，不想碰 Play 時要明確加 `--no-publish`。
 
 3. 每 60 秒用 `tmux capture-pane` 檢查進度，直到出現 `Done.` 或錯誤
-4. **若有帶 `--publish` 且上傳成功**，接著用 ego 瀏覽器確認 Play Console 的實際狀態並取得測試連結：
+4. **除非帶了 `--no-publish`，且上傳成功**，接著用 ego 瀏覽器確認 Play Console 的實際狀態並取得測試連結：
 
    ```bash
    bash .claude/commands/play_links.sh <versionName>
@@ -26,7 +28,7 @@
    它會先檢查登入帳號，再回報兩個軌道各自的版本、狀態與測試人員連結。**帳號不對時必須停下來（見下）。**
 5. 依結局回報（見下）
 
-**回報的最後一定要附上兩條測試連結。** 只要有帶 `--publish`，不論後續步驟是否全部順利，回報的結尾都要明確列出內部測試與封閉測試的加入網址，讓使用者可以直接複製給測試人員——不要只說「已上傳」就結束。連結取不到時（帳號沒登入等）也要講清楚是哪一步沒拿到，並直接引用本檔〈測試人員的加入連結〉表格裡的固定值。
+**回報的最後一定要附上兩條測試連結。** 只要這次有上傳（即未帶 `--no-publish`），不論後續步驟是否全部順利，回報的結尾都要明確列出內部測試與封閉測試的加入網址，讓使用者可以直接複製給測試人員——不要只說「已上傳」就結束。連結取不到時（帳號沒登入等）也要講清楚是哪一步沒拿到，並直接引用本檔〈測試人員的加入連結〉表格裡的固定值。
 
 ## 三種結局的判讀與回報
 
@@ -58,7 +60,7 @@
 
 | 軌道 ID | Play Console 名稱 | 用途 |
 |---|---|---|
-| `internal` | 內部測試 | `--publish` 的上傳目的地 |
+| `internal` | 內部測試 | 上傳的固定目的地（升級動作由此出發） |
 | `rooti` | 封閉測試（自訂軌道） | `--promote-track` 的預設值 |
 | `alpha` | 封閉測試（內建） | 空的，未使用 |
 | `beta` | 公開測試 | **任何人可從公開連結加入**；`build_release.sh` 已明文拒絕升級到此軌道 |
