@@ -7,11 +7,11 @@
 # work. Driving the Console with the admin account is the only path, and it keeps a human in
 # the loop for the one action that reaches every user.
 #
-# VERIFICATION STATUS (be honest about this — see the TODO block in build_release.md):
-#   verified   account guard, navigation, "建立新版本", the library picker, saving a draft,
-#              discarding a draft
-#   UNVERIFIED the release-notes step, "下一步", the preview page, and the final submit.
-#              The first real run must be supervised.
+# VERIFICATION STATUS (see the production section of build_release.md):
+#   verified   account guard, navigation, "建立新版本", the library picker, 版本名稱 / 版本資訊,
+#              "下一步" to 預覽並確認, reading its warnings, discarding a draft
+#   by hand    推出比例 -> 儲存 -> 發布總覽「送審 1 項變更」-> 「將變更送審」 (walked through once;
+#              deliberately left manual, see build_release.md)
 set -e
 
 usage() {
@@ -20,9 +20,9 @@ Usage: play_release_production.sh <versionName> <versionCode> [--handoff]
 
   <versionName>  e.g. 1.0.19   (digits and dots only)
   <versionCode>  e.g. 28       (digits only)
-  --handoff      after preparing the release, hand the browser over so you can finish the
-                 submit by hand. Without it the release is saved as a draft and the browser
-                 is closed.
+  --handoff      after reaching 預覽並確認, hand the browser over so you can set 推出比例,
+                 press 儲存 and send it for review by hand. Without it this is a dry run: it
+                 reports the preview's warnings, discards the release and closes the browser.
 
 This script never submits to production on its own. Requires Ego browser signed in as the
 Play Console admin account.
@@ -90,6 +90,8 @@ const VERSION_NAME = "${VERSION_NAME}";
 const VERSION_CODE = "${VERSION_CODE}";
 const HANDOFF = ${HANDOFF};
 const SHOT_DIR = "${SHOT_DIR}";
+// Project convention on every track (the API shows the same text on production and testing).
+const RELEASE_NOTES = "<zh-TW>\n修正錯誤\n</zh-TW>\n<en-US>\nMinor bug fix\n</en-US>";
 
 const base = \`https://play.google.com/console/developers/\${DEV_ID}/app/\${APP_ID}\`;
 const task = await taskSpace("play production release");
@@ -104,6 +106,7 @@ const fail = (marker, ...lines) => {
 // Without the finally an abort leaves the task space open AND can leave a half-prepared
 // production release behind for someone to submit later.
 let onPrepare = false;
+let handedOff = false;
 try {
   // --- 1. Account guard --------------------------------------------------
   await page.goto("https://play.google.com/console/developers");
@@ -133,19 +136,37 @@ try {
     fail("FAILED_NO_EDITOR", "The release editor did not open.");
   onPrepare = true;
 
-  // --- 4. Pick the exact bundle from the library -------------------------
+  // --- 3. Pick the exact bundle from the library -------------------------
   await page.evaluate(() => {
     const b = [...document.querySelectorAll("button")].find(e => /從檔案庫新增/.test((e.innerText||"").trim()));
     if (b) { b.scrollIntoView({ block: "center" }); b.click(); }
   });
-  await page.waitForTimeout(7000);
+  // The editor page has its own grid (pre-filled with the live bundle), so the lookup must be
+  // scoped to the library dialog; and that dialog renders its rows late, so wait for them with
+  // one read per poll instead of a fixed sleep. The button reads 從檔案庫新增 but the dialog
+  // title reads 從程式庫新增 — that is the Console's own wording, not a typo to unify.
+  let libraryReady = false;
+  for (let i = 0; i < 10 && !libraryReady; i++) {
+    await page.waitForTimeout(2000);
+    libraryReady = await page.evaluate(() => {
+      const d = [...document.querySelectorAll('[role="dialog"]')]
+        .find(x => x.getBoundingClientRect().height > 0 && /從程式庫新增/.test(x.innerText || ""));
+      if (!d || d.querySelectorAll('[role="row"] [role="gridcell"]').length === 0) return false;
+      d.setAttribute("data-library-dialog", "1");
+      return true;
+    });
+  }
+  if (!libraryReady)
+    fail("FAILED_NO_LIBRARY", "The bundle library dialog did not show any rows within 20s.");
 
-  const picked = await page.evaluate((wanted) => {
-    // Rows render as: 檔案類型 | 版本代碼 | 版本名稱 | API 等級 | 已上傳
-    const rows = [...document.querySelectorAll('[role="row"],tr')];
+  const picked = await page.evaluate(({ code, name }) => {
+    // Rows render as: (checkbox) | 檔案類型 | 版本代碼 | 版本名稱 | API 等級 | 已上傳
+    // Match code and name in their own columns: the shell's downgrade guard only checked the
+    // name, so a mismatched pair (e.g. "1.0.20 22") must not pick an old bundle.
+    const rows = [...document.querySelectorAll('[data-library-dialog] [role="row"]')];
     for (const r of rows) {
-      const cells = [...r.querySelectorAll('[role="gridcell"],td')].map(c => (c.innerText||"").trim());
-      if (!cells.includes(wanted)) continue;
+      const cells = [...r.querySelectorAll('[role="gridcell"]')].map(c => (c.innerText||"").trim());
+      if (cells[2] !== code || cells[3] !== name) continue;
       const cb = r.querySelector('input[type=checkbox],[role=checkbox]');
       if (!cb) continue;
       // Mark the row so the post-click check can be scoped to it: a page-wide
@@ -155,11 +176,11 @@ try {
       return { ok: true, cx: Math.round(b.x + b.width/2), cy: Math.round(b.y + b.height/2), cells };
     }
     return { ok: false, seen: rows.slice(0,12).map(r => (r.innerText||"").replace(/\\n/g," ").slice(0,60)) };
-  }, VERSION_CODE);
+  }, { code: VERSION_CODE, name: VERSION_NAME });
 
   if (!picked.ok) {
     console.log(JSON.stringify(picked.seen, null, 2));
-    fail("FAILED_BUNDLE_NOT_FOUND", \`versionCode \${VERSION_CODE} is not in the bundle library.\`);
+    fail("FAILED_BUNDLE_NOT_FOUND", \`no library row has versionCode \${VERSION_CODE} with versionName \${VERSION_NAME}.\`);
   }
 
   // Material checkboxes ignore el.click(); send a real mouse event.
@@ -184,32 +205,85 @@ try {
   if (!added)
     fail("FAILED_ADD", \`versionCode \${VERSION_CODE} did not appear in the release after 加入版本.\`);
 
+  // --- 4. Release name and notes -----------------------------------------
+  // Angular only picks up a value set through the native setter plus an input event.
+  const filled = await page.evaluate(({ name, notes }) => {
+    const vis = [...document.querySelectorAll("input,textarea")].filter(e => e.getBoundingClientRect().height > 0);
+    const nameEl = vis.find(e => e.tagName === "INPUT" && /版本名稱/.test(e.getAttribute("aria-label") || ""));
+    const notesEl = vis.find(e => e.tagName === "TEXTAREA");
+    if (!nameEl || !notesEl) return { ok: false };
+    for (const [el, v] of [[nameEl, name], [notesEl, notes]]) {
+      const proto = el.tagName === "TEXTAREA" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+      Object.getOwnPropertyDescriptor(proto, "value").set.call(el, v);
+      ["input", "change", "blur"].forEach(t => el.dispatchEvent(new Event(t, { bubbles: true })));
+    }
+    return { ok: nameEl.value === name && notesEl.value === notes };
+  }, { name: VERSION_NAME, notes: RELEASE_NOTES });
+  if (!filled.ok)
+    fail("FAILED_NOTES", "Could not fill 版本名稱 / 版本資訊.");
+  await page.waitForTimeout(3000);
+  console.log(\`RELEASE NAME: \${VERSION_NAME}\`);
+
   const shot = await page.screenshot({ path: \`\${SHOT_DIR}/prepared.png\` });
   console.log(\`SCREENSHOT: \${shot}\`);
 
-  // --- 5. Stop here — this script never submits --------------------------
-  // TODO(unverified): 版本名稱 / 版本資訊, then 下一步 -> 預覽並確認 -> submit.
+  // --- 5. 下一步 -> 預覽並確認 -------------------------------------------
+  await page.evaluate(() => {
+    const b = [...document.querySelectorAll("button")].find(e => /^下一步\$/.test((e.innerText||"").trim()));
+    if (b) b.click();
+  });
+  // The Console validates server-side after 下一步, which can outlast any fixed sleep. 推出比例
+  // sits at the bottom of the preview, so once it and 儲存 are there the page has rendered.
+  let onPreview = false;
+  for (let i = 0; i < 15 && !onPreview; i++) {
+    await page.waitForTimeout(2000);
+    onPreview = await page.evaluate(() =>
+      /推出比例/.test(document.body.innerText) &&
+      [...document.querySelectorAll("button")].some(e => /^儲存\$/.test((e.innerText||"").trim())));
+  }
+  if (!onPreview)
+    fail("FAILED_NO_PREVIEW", "下一步 did not reach the 預覽並確認 page within 30s.");
+  // Expand the collapsed warning list so it can be reported verbatim.
+  const expanded = await page.evaluate(() => {
+    const b = [...document.querySelectorAll("button")].find(e => /顯示更多/.test((e.innerText||"").trim()));
+    if (b) b.click();
+    return !!b;
+  });
+  if (expanded) await page.waitForTimeout(2500);
+  const preview = await page.evaluate(() => {
+    const t = document.body.innerText;
+    const a = t.indexOf("錯誤、警告和訊息"), z = t.indexOf("支援裝置異動摘要");
+    // The field has no aria-label; find it from its visible "推出比例 *" label.
+    const label = [...document.querySelectorAll("*")]
+      .find(e => e.children.length === 0 && /^推出比例/.test((e.innerText || "").trim()));
+    let pct = null;
+    for (let n = label, depth = 0; n && depth < 6; n = n.parentElement, depth++) {
+      pct = n.querySelector("input");
+      if (pct) break;
+    }
+    return {
+      issues: a >= 0 && z > a ? t.slice(a, z).trim() : "(none listed)",
+      rollout: pct ? pct.value : null,
+    };
+  });
+  console.log("PREVIEW ISSUES:");
+  preview.issues.split("\\n").filter(Boolean).forEach(l => console.log("  " + l));
+  console.log(\`ROLLOUT FIELD: \${preview.rollout === null ? "(not found)" : JSON.stringify(preview.rollout)}\`);
+  const pshot = await page.screenshot({ path: \`\${SHOT_DIR}/preview.png\` });
+  console.log(\`SCREENSHOT: \${pshot}\`);
+
+  // --- 6. Stop here — this script never submits --------------------------
+  // Pressing 儲存 here does not publish either: it parks the release in 發布總覽, where it
+  // still has to be sent for review. Neither step is automated.
   if (HANDOFF) {
-    console.log("HANDOFF: the browser is yours for the final submit.");
-    console.log("  下一步 -> 預覽並確認 -> 發布 are not automated yet; report what you see so");
-    console.log("  this script can be finished.");
-    onPrepare = false; // leave the draft in place for the human
+    console.log("HANDOFF: the browser is on 預覽並確認. Set 推出比例, press 儲存 -> 前往總覽頁面,");
+    console.log("  then 送審 1 項變更 -> 將變更送審. Managed publishing is on: after approval it");
+    console.log("  still needs 發布 1 項變更 on 發布總覽 before users get it.");
+    onPrepare = false; // leave the release in place for the human
+    handedOff = true;
     await task.handOff();
   } else {
-    await page.evaluate(() => {
-      const b = [...document.querySelectorAll("button")].find(e => /儲存為草稿/.test((e.innerText||"").trim()));
-      if (b) b.click();
-    });
-    await page.waitForTimeout(8000);
-    const stillEditing = /\\/prepare/.test(await page.url());
-    if (stillEditing) {
-      console.log("SAVE_UNCERTAIN: still on the editor page after 儲存為草稿.");
-      console.log(\`  Check \${base}/tracks/production before assuming anything was saved.\`);
-    } else {
-      onPrepare = false;
-      console.log("SAVED_AS_DRAFT");
-      console.log(\`  Review and publish it yourself: \${base}/tracks/production\`);
-    }
+    console.log("DRY_RUN: reached 預覽並確認; discarding. Re-run with --handoff to finish by hand.");
     console.log("Done.");
   }
 } finally {
@@ -232,12 +306,15 @@ try {
         return { cx: Math.round(r.x + r.width/2), cy: Math.round(r.y + r.height/2) };
       });
       if (c) { await page.mouse.click(c.cx, c.cy, { label: "discard draft" }); await page.waitForTimeout(7000); }
+      // A missing button or dialog is a silent no-op, so check the editor actually closed.
+      if (!c || /\\/prepare/.test(await page.url())) throw new Error("editor still open");
       console.log("CLEANUP: discarded the half-prepared draft.");
     } catch (e) {
-      // Never let cleanup mask the original failure.
+      // Never let cleanup mask the original failure, but never report success either.
       console.log(\`CLEANUP_FAILED: check \${base}/tracks/production for a stray draft.\`);
+      process.exitCode = 1;
     }
   }
-  if (!HANDOFF) await task.finish({ keep: [] });
+  if (!handedOff) await task.finish({ keep: [] });
 }
 EOF

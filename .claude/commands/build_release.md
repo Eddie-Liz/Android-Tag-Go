@@ -70,6 +70,8 @@
 
 查目前各軌道的版本：`python3 .claude/commands/play_tracks.py`（直接問 Publishing API，不刮畫面）。
 
+**本 app 開了控管型發布**：升級成功、API 也顯示 `completed`，測試人員仍拿不到，要等變更審完、出現在 Play Console「發布總覽 → 已完成發布準備的變更」，再按 **發布 N 項變更** 才會生效。回報時不可把「已升級」說成「測試人員已可安裝」。
+
 ## 測試人員的加入連結（固定值，不隨版本改變）
 
 | 軌道 | 連結 |
@@ -81,34 +83,27 @@
 
 測試人員必須先在該軌道的測試人員名單內，開啟連結接受邀請後，才能在 Play 商店看到測試版。
 
-## 正式版發布（`play_release_production.sh`）— 尚未完工，見 TODO
+## 正式版發布（`play_release_production.sh`）
 
 正式版**不能走 API**：服務帳戶刻意沒有 production 權限（最小權限原則），所以 `promoteReleaseArtifact --promote-track production` 必定失敗。唯一的路是用 ego 操作 Play Console 的管理員帳號，而這剛好保留了一道人為關卡。
 
 ```bash
-bash .claude/commands/play_release_production.sh <versionName> <versionCode>            # 備好草稿就停
-bash .claude/commands/play_release_production.sh <versionName> <versionCode> --handoff  # 備好後把瀏覽器交給你手動送出
+bash .claude/commands/play_release_production.sh <versionName> <versionCode>            # dry run：走到預覽頁、印出警告後捨棄；捨棄失敗會印 CLEANUP_FAILED 並以非 0 結束
+bash .claude/commands/play_release_production.sh <versionName> <versionCode> --handoff  # 走到預覽頁後把瀏覽器交給人
 ```
 
-旗標刻意叫 `--handoff` 而不是 `--confirm`：它今天的作用就是「把瀏覽器交給人」。若命名為 `--confirm`，等下方 TODO 的送出步驟實作上去，同一個旗標會從「給我瀏覽器」無聲變成「發布給所有使用者」，而任何寫在 shell history 或包裝腳本裡的既有用法都會跟著改變行為。
+腳本自動完成：API 降版守門 → 帳號守門 → 建立新版本 → 從檔案庫勾選指定版本代碼 → 填版本名稱（= versionName）與版本資訊（專案慣例 `修正錯誤` / `Minor bug fix`）→ 下一步 → 印出預覽頁的「錯誤、警告和訊息」。**腳本永遠不送出**；旗標刻意叫 `--handoff` 而非 `--confirm`，避免日後同一旗標無聲變成「發布給所有使用者」。
 
-發布前會先用 `play_tracks.py` 從 API 取得目前正式版版本並比對，**不新於線上版本就直接中止**，在開瀏覽器之前就擋下。
+**不要用測試軌道的「升級版本」推正式版。** 實測過：從 `rooti` 點升級到正式版時，編輯頁預載的是該軌道**目前可用**的套件，而不是剛上傳的版本——照那樣送出會把比線上還舊的版本推給所有使用者。腳本因此走「正式版 → 建立新版本 → 從檔案庫新增」，並要求版本代碼與版本名稱**同屬一列**才勾選，參數配錯（如 `1.0.20 22`）會以 `FAILED_BUNDLE_NOT_FOUND` 中止，不會挑到舊套件。
 
-**不要用測試軌道的「升級版本」推正式版。** 實測過：從 `rooti` 點升級到正式版時，編輯頁預載的是該軌道**目前可用**的套件（當時是 `22 (1.0.13)`），而不是剛上傳、還在審查中的 1.0.19——照那樣送出會把比線上還舊的版本推給所有使用者。腳本改走「正式版 → 建立新版本 → 從檔案庫新增 → 指定版本代碼」，把要發哪一版寫死。
+### 預覽頁之後的人工步驟（已實際走過一次）
 
-### TODO（第一次真的要發正式版時完成）
+1. **推出比例 %**（必填，無預設值）：過去各版都是 100%。
+2. 按 **儲存** → 對話框「要前往『發布總覽』頁面嗎？」→ **前往總覽頁面**。此時 API 已顯示 production 為新版 `completed`，但**尚未送審、使用者拿不到**；因此在該版正式發布前重跑本腳本會得到 `ABORT_NOT_NEWER`，屬預期行為（擋住同一版建立第二個正式版版本）。
+3. 發布總覽「尚未送審的變更」→ **送審 1 項變更** → 對話框「要將 1 項變更送審嗎？」→ **將變更送審**。快速檢查（約 15 分鐘）通過後自動進入 Google 審查（通常 7 天內）。
+4. **控管型發布**：審查通過後變更會停在「已完成發布準備的變更」，**還要再按「發布 N 項變更」使用者才拿得到**。
 
-已驗證：帳號守門、導航、建立新版本、檔案庫挑選正確版本代碼、儲存為草稿、捨棄草稿。
-
-**未驗證，需要在有人看著的情況下跑一次並補完腳本：**
-
-1. 填寫「版本名稱」與「版本資訊」（release notes）——欄位存在但沒填過；正式版通常強制要求
-2. 「下一步」之後的「預覽並確認」頁長什麼樣、有哪些必填項
-3. **分階段推出的百分比**是否會出現、預設值多少
-4. 最後那顆送出鍵的實際文字與位置（`發布` / `傳送至審查`）
-5. 若「管理發布」被開啟，送出後還會多一道「發布總覽」的人工步驟
-
-補完前，`--confirm` 只會把瀏覽器交還給你手動完成，並要求你回報畫面，好把步驟寫進腳本。
+預覽頁常駐一則警告「App Bundle 含有原生程式碼，而您尚未上傳偵錯符號檔」，不阻擋送審，**也無法從本專案消除**：AAB 內的 `.so`（`libbarhopper_v3` / `libimage_processing_util_jni` / `libandroidx.graphics.path`）全部來自 ML Kit、CameraX、androidx 的預編譯 AAR，出廠即已 strip，所以 `debugSymbolLevel = "FULL"` 沒有符號可抽，AAB 裡也不會出現 `BUNDLE-METADATA/com.android.tools.build.debugsymbols/`。專案自己加入原生碼之前不必處理。
 
 ## 注意
 
