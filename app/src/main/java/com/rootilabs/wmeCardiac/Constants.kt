@@ -4,6 +4,7 @@ object Constants {
     // Server regions
     const val AP_API_URL  = "https://mct-api.rooticare.com/"
     const val AP2_API_URL = "https://mct2-api.rooticare.com/"
+    const val AP3_API_URL = "https://mct3-api.rooticare.com/"
     const val EU_API_URL  = "https://mcteu-api.rooticare.com/"
     const val DEV_API_URL = "http://192.168.103.17:8080/"
 
