@@ -361,9 +361,13 @@ class RootiCareRepository(
                 val response = result.body()!!
                 Log.d(TAG, "Upload success: addedSize=${response.addedSize}, updatedSize=${response.updatedSize}, failedSize=${response.failedSize}, ignoredSize=${response.ignoredSize}")
                 // Mark as uploaded in local DB — isEdit=false means synced, isRead=true hides resend icon
-                val updatedTags = tags.map { it.copy(isEdit = false, isRead = true) }
+                val updatedTags = acceptedTags(tags, response).map { it.copy(isEdit = false, isRead = true) }
                 database.eventTagDao().insertAll(updatedTags)
-                Result.success(response)
+                if (response.failedSize > 0) {
+                    Result.failure(Exception("UPLOAD_PARTIALLY_FAILED"))
+                } else {
+                    Result.success(response)
+                }
             } else {
                 val errorBody = result.errorBody()?.string()
                 Log.e(TAG, "Upload failed: HTTP ${result.code()} - $errorBody")
@@ -423,6 +427,18 @@ class RootiCareRepository(
     }
 
     // ---- Helpers ----
+    /**
+     * Rejected tags are identified only by tagTime, the UTC seconds sent in the request. When that
+     * cannot account for every rejection, keep the whole batch unsynced: a resend is recoverable,
+     * a rejected tag marked as synced is never uploaded again.
+     */
+    private fun acceptedTags(tags: List<EventTagDbEntity>, response: AddVirtualTagsResponse): List<EventTagDbEntity> {
+        if (response.failedSize <= 0) return tags
+        val rejectedSeconds = response.failedAdding.orEmpty().map { it.tagTime }.toSet()
+        val (rejected, accepted) = tags.partition { it.tagTime / 1000 in rejectedSeconds }
+        return if (rejected.size == response.failedSize) accepted else emptyList()
+    }
+
     private fun parseError(errorJson: String?): String {
         if (errorJson == null) return "UNKNOWN_ERROR"
         
