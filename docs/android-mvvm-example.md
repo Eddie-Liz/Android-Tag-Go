@@ -607,7 +607,7 @@ app/src/main/java/com/rooti/tagandgo/
 ```kotlin
 object NetworkModule {
 
-    private const val BASE_URL = "https://api.rooticare.com"
+    private const val BASE_URL = "https://mct-api.rooticare.com"
 
     private var accessToken: String = ""
 
@@ -1014,7 +1014,7 @@ class PatientRepository(
 ) {
     companion object {
         private const val TAG = "PatientRepo"
-        private const val BASIC_AUTH = "Basic dVlqeHgzbGU0enM3U2lqQ3M1VW5tZHpHWGRZSmhKUEo6dVZNbVB4eE5MYzF2ckJUREtuU1daa2g1cmlJTHh2dEw="
+        private const val BASIC_AUTH = Constants.BASIC_AUTH
     }
 
     // ---- Helper: parse error body ----
@@ -1576,13 +1576,13 @@ class MainActivity : AppCompatActivity() {
 ### Success Flow
 
 ```
-D/HTTP:         -> GET https://api.rooticare.com/oauth/token
-D/HTTP:         <- 200 https://api.rooticare.com/oauth/token (120ms)
+D/HTTP:         -> POST https://mct-api.rooticare.com/oauth/token
+D/HTTP:         <- 200 https://mct-api.rooticare.com/oauth/token (120ms)
 D/PatientRepo:  -> getToken()
 D/PatientRepo:  <- getToken OK
 
-D/HTTP:         -> GET https://api.rooticare.com/oauth/vendors/rootilabs/patients/VT01
-D/HTTP:         <- 200 https://api.rooticare.com/oauth/vendors/rootilabs/patients/VT01 (85ms)
+D/HTTP:         -> GET https://mct-api.rooticare.com/oauth/vendors/rootilabs/patients/VT01
+D/HTTP:         <- 200 https://mct-api.rooticare.com/oauth/vendors/rootilabs/patients/VT01 (85ms)
 D/PatientRepo:  -> authPatient(rootilabs, VT01)
 D/PatientRepo:  <- authPatient OK: vendorName=RootiLabs, subscribedBefore=false
 
@@ -1602,8 +1602,8 @@ D/PatientRepo:  <- fetchAllHistory OK: saved 12 tags
 ### Error Flow
 
 ```
-D/HTTP:         -> GET https://api.rooticare.com/oauth/vendors/rootilabs/patients/INVALID
-E/HTTP:         <- 400 https://api.rooticare.com/oauth/vendors/rootilabs/patients/INVALID (65ms)
+D/HTTP:         -> GET https://mct-api.rooticare.com/oauth/vendors/rootilabs/patients/INVALID
+E/HTTP:         <- 400 https://mct-api.rooticare.com/oauth/vendors/rootilabs/patients/INVALID (65ms)
                    {"error":"invalid_patient","error_description":"patient: [ INVALID ] is invalid."}
 D/PatientRepo:  -> authPatient(rootilabs, INVALID)
 E/PatientRepo:  <- authPatient [400]: invalid_patient - patient: [ INVALID ] is invalid.
@@ -1614,7 +1614,7 @@ E/PatientRepo:  <- authPatient [400]: invalid_patient - patient: [ INVALID ] is 
 ```
 D/PatientRepo:  -> authPatient(rootilabs, VT01)
 E/PatientRepo:  <- authPatient exception
-                   java.net.UnknownHostException: Unable to resolve host "api.rooticare.com"
+                   java.net.UnknownHostException: Unable to resolve host "mct-api.rooticare.com"
 ```
 
 ---
