@@ -24,10 +24,7 @@ class MainActivity : ComponentActivity() {
             isAppearanceLightNavigationBars = false
         }
 
-        val hasSession = ServiceLocator.tokenManager.isLoggedIn &&
-                        !ServiceLocator.tokenManager.accessToken.isNullOrBlank()
-
-        val startDest = if (hasSession) "main" else "login"
+        val startDest = if (ServiceLocator.tokenManager.hasActiveSession) "main" else "login"
 
         setContent {
             TagGoTheme {

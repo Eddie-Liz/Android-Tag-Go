@@ -122,13 +122,18 @@ class TokenManager(private val context: Context) {
             "1.0.0"
         }
 
+    // A session the app may resume on cold start. An install upgraded from a version that set
+    // isLoggedIn at step 3 can hold isLoggedIn without a measureRecordId; that must not reach main.
+    val hasActiveSession: Boolean
+        get() = isLoggedIn && !accessToken.isNullOrBlank() && !measureRecordId.isNullOrBlank()
+
     // Batch write for login phase 3 (authPatient). Single commit = one disk I/O on IO thread.
+    // isLoggedIn is not set here: the measurement is unconfirmed until persistMeasurementInfo.
     fun persistLoginSession(institutionId: String, patientId: String, vendorName: String?, loginTime: Long) {
         val editor = prefs.edit()
             .putString(KEY_INSTITUTION_ID, institutionId)
             .putString(KEY_PATIENT_ID, patientId)
             .putLong(KEY_LOGIN_TIME, loginTime)
-            .putBoolean(KEY_IS_LOGGED_IN, true)
         if (vendorName != null) editor.putString(KEY_VENDOR_NAME, vendorName)
         editor.commit()
     }
@@ -137,6 +142,7 @@ class TokenManager(private val context: Context) {
     // measureRecordId is write-once: if already set it is preserved (immutable after login).
     fun persistMeasurementInfo(serverDeviceId: String?, measureRecordId: String) {
         val editor = prefs.edit()
+            .putBoolean(KEY_IS_LOGGED_IN, true)
             .putBoolean(KEY_IS_MEASURING, true)
             .remove(KEY_LAST_LOGGED_OUT_ID)
         if (serverDeviceId != null) editor.putString(KEY_SERVER_DEVICE_ID, serverDeviceId)
