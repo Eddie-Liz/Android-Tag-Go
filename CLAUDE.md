@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Build Commands
 
 ```bash
@@ -61,7 +59,7 @@ ViewModels access `ServiceLocator.repository` directly. There is no StateFlow; s
 ### Key Business Logic
 
 **Login flow** (see `docs/api.md` for the full state diagram):
-1. `GET /oauth/token` — exchange Basic auth for bearer token
+1. `POST /oauth/token` — exchange Basic auth for bearer token
 2. `GET recordingMeasurements` — fetch active recording devices for this patient
 3. User selects device → `GET authPatient` — subscribe patient to that measure session
 4. `GET getCurrentMeasurementInfo` — verify recording is active (`state == 0`, `mode == 0`)
@@ -95,7 +93,7 @@ Historical mappings are archived under `apk/<versionName>/mapping_V<versionName>
 |------|---------|
 | `app/build.gradle.kts` | Version code/name, signing config, Firebase App Distribution release notes |
 | `keystore.properties` | Signing credentials (not committed) |
-| `Constants.kt` | Server URLs and `BASIC_AUTH` credential |
+| `Constants.kt` | Default `BASE_URL`, region URL constants and `BASIC_AUTH` credential |
 | `di/AppModule.kt` | `ServiceLocator` — the wiring of all singletons |
 | `data/auth/TokenManager.kt` | SharedPreferences wrapper for all auth/session state |
 | `data/repository/RootiCareRepository.kt` | All API calls and local DB operations |
@@ -107,11 +105,14 @@ Historical mappings are archived under `apk/<versionName>/mapping_V<versionName>
 ```kotlin
 AP_API_URL  = "https://mct-api.rooticare.com/"   // default
 AP2_API_URL = "https://mct2-api.rooticare.com/"
+AP3_API_URL = "https://mct3-api.rooticare.com/"
 EU_API_URL  = "https://mcteu-api.rooticare.com/"
 DEV_API_URL = "http://192.168.103.17:8080/"       // local SIT
 ```
 
-Users select the server on the login screen; the selection is persisted in `TokenManager.serverUrl` and applied via `ServiceLocator.reinitWithBaseUrl()`.
+The login picker reads the `ServerRegion` enum (`ui/login/LoginViewModel.kt`), whose URLs are literals: adding or changing a region means editing the enum, and the region constants in `Constants.kt` only feed `BASE_URL`. `DEV_API_URL` has no call site and no enum entry, so SIT is not selectable in the app.
+
+`onServerSelected` only writes `TokenManager.serverUrl`. `ServiceLocator.reinitWithBaseUrl()` runs when `login()` starts Phase 1, and a retry with a device already selected goes straight to Phase 2 without it. Cold start builds Retrofit in `ServiceLocator.init()` from the persisted URL.
 
 ## Localisation
 
