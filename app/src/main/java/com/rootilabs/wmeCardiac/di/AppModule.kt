@@ -47,20 +47,13 @@ object ServiceLocator {
         appContext = context.applicationContext
         tokenManager = TokenManager(appContext)
         val savedUrl = tokenManager.serverUrl ?: Constants.BASE_URL
-        initApis(savedUrl)
         initDatabase()
+        initApis(savedUrl)
     }
 
     fun reinitWithBaseUrl(baseUrl: String) {
         android.util.Log.d("ServiceLocator", "reinitWithBaseUrl: $baseUrl")
         initApis(baseUrl)
-        repository = RootiCareRepository(
-            authApi = authApi,
-            rootiCareApi = rootiCareApi,
-            tokenManager = tokenManager,
-            database = database,
-            moshi = moshi
-        )
     }
 
     private fun initApis(baseUrl: String) {
@@ -107,7 +100,7 @@ object ServiceLocator {
             authApi = authApi,
             rootiCareApi = rootiCareApi,
             tokenManager = tokenManager,
-            database = if (::database.isInitialized) database else initDatabase(),
+            database = database,
             moshi = moshi
         )
     }
@@ -127,12 +120,11 @@ object ServiceLocator {
             redactHeader("Authorization")
         }
 
-    private fun initDatabase(): AppDatabase {
+    private fun initDatabase() {
         database = Room.databaseBuilder(
             appContext,
             AppDatabase::class.java,
             "rooticare_db"
         ).fallbackToDestructiveMigration().build()
-        return database
     }
 }
