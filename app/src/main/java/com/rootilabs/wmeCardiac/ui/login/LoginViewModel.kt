@@ -30,6 +30,18 @@ data class LoginUiState(
     val transientErrorMessage: String? = null
 )
 
+private fun LoginUiState.withoutSelectedDevice() = copy(
+    selectedDeviceId = null,
+    selectedMeasureRecordId = null,
+    selectedDeviceIsLoggedIn = false
+)
+
+private fun LoginUiState.withoutDeviceState() = withoutSelectedDevice().copy(
+    measurements = emptyList(),
+    showDeviceSheet = false,
+    showAlreadyLoggedInAlert = false
+)
+
 enum class ServerRegion(val label: String, val url: String) {
     AP("Asia-Pacific 1", "https://mct-api.rooticare.com/"),
     AP2("Asia-Pacific 2", "https://mct2-api.rooticare.com/"),
@@ -50,7 +62,10 @@ class LoginViewModel : ViewModel() {
     var institutionId by mutableStateOf("")
     var patientId by mutableStateOf("")
     var selectedServer by mutableStateOf(ServerRegion.AP)
-    
+
+    // The institution and patient that Phase 1's device list and selection were fetched for.
+    private var deviceStateOwner: Pair<String, String>? = null
+
     init {
         val savedUrl = ServiceLocator.tokenManager.serverUrl
         if (savedUrl != null) {
@@ -70,6 +85,7 @@ class LoginViewModel : ViewModel() {
             uiState = uiState.copy(error = "FIELDS_NO_SPACES")
             return
         }
+        discardDeviceStateIfIdentityChanged()
         viewModelScope.launch {
             // If we already have a selected device (and it's not logged in), 
             // perform the second phase of login.
@@ -90,13 +106,23 @@ class LoginViewModel : ViewModel() {
         }
     }
 
+    private fun currentIdentity() = institutionId.trim() to patientId.trim()
+
+    private fun discardDeviceStateIfIdentityChanged() {
+        if (deviceStateOwner != null && deviceStateOwner != currentIdentity()) {
+            deviceStateOwner = null
+            uiState = uiState.withoutDeviceState()
+        }
+    }
+
     private suspend fun performLogin() {
         try {
             institutionId = institutionId.trim()
             patientId = patientId.trim()
+            deviceStateOwner = currentIdentity()
 
             uiState = uiState.copy(isLoading = true, error = null)
-            Log.d(TAG, "=== Login Phase 1 === institutionId=$institutionId, patientId=$patientId")
+            Log.d(TAG, "=== Login Phase 1 ===")
 
             // Step 1: Get Token
             val tokenResult = repository.getToken()
@@ -144,7 +170,8 @@ class LoginViewModel : ViewModel() {
 
     fun onMeasurementSelected(info: MeasurementInfo) {
         val measureId = info.measureRecordId ?: return
-        
+
+        deviceStateOwner = currentIdentity()
         uiState = uiState.copy(
             selectedDeviceId = info.deviceId,
             selectedMeasureRecordId = measureId,
@@ -163,6 +190,9 @@ class LoginViewModel : ViewModel() {
     }
 
     private fun startPhase2(measureId: String) {
+        // Every step of one login must use one identity, whatever the fields hold by then.
+        val institutionId = this.institutionId
+        val patientId = this.patientId
         uiState = uiState.copy(isLoading = true, statusMessage = "STATUS_AUTH")
         
         viewModelScope.launch {
@@ -201,14 +231,15 @@ class LoginViewModel : ViewModel() {
                 if (measurementInfo == null || !measurementInfo.isMeasuring()) {
                     Log.w(TAG, "Device not measuring or not found. Cleaning up subscription.")
                     repository.unsubscribePatient(institutionId, patientId, measureId)
-                    uiState = uiState.copy(isLoading = false, error = "NOT_MEASURING")
+                    // The record is not recording, so a retry must fetch the device list again.
+                    uiState = uiState.withoutSelectedDevice().copy(isLoading = false, error = "NOT_MEASURING")
                     return@launch
                 }
 
                 if (!measurementInfo.isVirtualTagMode()) {
                     Log.w(TAG, "Unsupported mode: ${measurementInfo.mode}. Cleaning up subscription.")
                     repository.unsubscribePatient(institutionId, patientId, measureId)
-                    uiState = uiState.copy(isLoading = false, error = "UNSUPPORTED_MODE")
+                    uiState = uiState.withoutSelectedDevice().copy(isLoading = false, error = "UNSUPPORTED_MODE")
                     return@launch
                 }
 
@@ -250,12 +281,9 @@ class LoginViewModel : ViewModel() {
     }
 
     fun onDismissAlreadyLoggedInAlert() {
-        uiState = uiState.copy(
+        uiState = uiState.withoutSelectedDevice().copy(
             isLoading = false,
             showAlreadyLoggedInAlert = false,
-            selectedMeasureRecordId = null,
-            selectedDeviceId = null,
-            selectedDeviceIsLoggedIn = false,
             error = null,
             showDeviceSheet = uiState.measurements.size > 1
         )
@@ -270,6 +298,7 @@ class LoginViewModel : ViewModel() {
     }
 
     fun onShowDeviceSheet() {
+        discardDeviceStateIfIdentityChanged()
         if (uiState.measurements.isNotEmpty()) {
             uiState = uiState.copy(showDeviceSheet = true)
         }
@@ -284,9 +313,22 @@ class LoginViewModel : ViewModel() {
     }
 
     fun onServerSelected(region: ServerRegion) {
+        if (uiState.isLoading) {
+            // The login in flight belongs to the current region and cannot be moved to another.
+            uiState = uiState.copy(showServerSheet = false)
+            return
+        }
+        val regionChanged = region != selectedServer
         selectedServer = region
         ServiceLocator.tokenManager.serverUrl = region.url
-        uiState = uiState.copy(showServerSheet = false)
+        uiState = if (regionChanged) {
+            // The device list and selection came from the old region's server. Dropping them makes
+            // the next login() run Phase 1, which rebuilds Retrofit for the new base URL.
+            deviceStateOwner = null
+            uiState.withoutDeviceState().copy(showServerSheet = false, error = null)
+        } else {
+            uiState.copy(showServerSheet = false)
+        }
     }
 
     fun onScanClicked() {

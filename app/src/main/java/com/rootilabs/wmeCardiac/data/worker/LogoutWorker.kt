@@ -14,7 +14,7 @@ class LogoutWorker(appContext: Context, workerParams: WorkerParameters) :
         val patientId = inputData.getString("patientId") ?: return Result.failure()
         val measureId = inputData.getString("measureId") ?: return Result.failure()
 
-        Log.d("LogoutWorker", "Background Unsubscribe starting for: $institutionId / $patientId / $measureId")
+        Log.d("LogoutWorker", "Background Unsubscribe starting for: $measureId")
         
         val repository = ServiceLocator.repository
         val result = repository.unsubscribePatient(institutionId, patientId, measureId)

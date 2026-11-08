@@ -322,7 +322,7 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { 
+                    .clickable(enabled = !uiState.isLoading) {
                         // Open scanner logic
                         viewModel.onScanClicked()
                     }
