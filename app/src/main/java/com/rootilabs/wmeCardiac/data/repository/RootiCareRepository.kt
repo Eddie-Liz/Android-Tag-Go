@@ -76,7 +76,7 @@ class RootiCareRepository(
     // ---- API #3: Auth Patient (GET, subscribes the device) ----
     suspend fun authPatient(institutionId: String, patientId: String, measureId: String): Result<AuthPatientResponse> {
         return try {
-            Log.d(TAG, "authPatient: institutionId=$institutionId, patientId=$patientId, measureId=$measureId")
+            Log.d(TAG, "authPatient: measureId=$measureId")
             
             val response = rootiCareApi.authPatient(institutionId, patientId, measureId)
             Log.d(TAG, "authPatient response code: ${response.code()}")
@@ -127,7 +127,7 @@ class RootiCareRepository(
             val response = rootiCareApi.getCurrentMeasurementInfo(institutionId, patientId, measureId)
             if (response.isSuccessful) {
                 val body = response.body()
-                Log.d(TAG, "getCurrentMeasurement success: $body")
+                Log.d(TAG, "getCurrentMeasurement success: state=${body?.state}, mode=${body?.mode}")
                 Result.success(body)
             } else if (response.code() == 404) {
                 Log.d(TAG, "getCurrentMeasurement 404: No active measurement found")
@@ -246,7 +246,7 @@ class RootiCareRepository(
         }
 
         return try {
-            Log.d(TAG, "Logout: POST .../unsubscribe inst=$institutionId, patient=$patientId, measure=$measureId")
+            Log.d(TAG, "Logout: POST .../unsubscribe measure=$measureId")
 
             val response = try {
                 rootiCareApi.unsubscribePatient(institutionId, patientId, measureId)
@@ -256,8 +256,8 @@ class RootiCareRepository(
             }
 
             val statusCode = response.code()
-            val responseBody = response.body()?.string()
-            Log.d(TAG, "Logout response: code=$statusCode, body=$responseBody")
+            response.body()?.close()
+            Log.d(TAG, "Logout response: code=$statusCode")
 
             if (response.isSuccessful) {
                 Log.d(TAG, "Logout success, clearing local data")
@@ -316,7 +316,7 @@ class RootiCareRepository(
      * so the ongoing login flow can continue safely.
      */
     suspend fun revokeOldSession(institutionId: String, patientId: String, measureId: String) {
-        Log.d(TAG, "revokeOldSession: inst=$institutionId, patient=$patientId, meas=$measureId")
+        Log.d(TAG, "revokeOldSession: meas=$measureId")
         try {
             val response = rootiCareApi.unsubscribePatient(institutionId, patientId, measureId)
             Log.d(TAG, "revokeOldSession response: code=${response.code()}")
@@ -488,11 +488,6 @@ class RootiCareRepository(
         
         val symptoms = symptomTypes?.symptomTypes ?: emptyList()
         val symptomOthers = symptomTypes?.others
-
-        // Debug: 印出從伺服器讀回的 symptomTypes 格式
-        Log.d(TAG, "=== History Tag from Server ===")
-        Log.d(TAG, "  raw symptomTypes.symptomTypes: $symptoms")
-        Log.d(TAG, "  raw symptomTypes.others: $symptomOthers")
 
         return EventTagDbEntity(
             id = tagId ?: "TAG-${System.currentTimeMillis()}",
