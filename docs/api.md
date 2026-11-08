@@ -6,10 +6,10 @@
 
 | Item | Value |
 |------|-------|
-| Base URL (Production) | `https://api.rooticare.com` |
-| Base URL (SIT) | `https://192.168.103.17` |
+| Base URL (Production) | Per region: `https://mct-api.rooticare.com`, `https://mct2-api.rooticare.com`, `https://mct3-api.rooticare.com`, `https://mcteu-api.rooticare.com` |
+| Base URL (SIT) | `http://192.168.103.17:8080` |
 | Content-Type | `application/json` |
-| Protocol | HTTPS |
+| Protocol | HTTPS (SIT: HTTP) |
 
 ### Authentication
 
@@ -23,7 +23,7 @@ POST /oauth/token
 
 Headers:
 ```
-Authorization: Basic dVlqeHgzbGU0enM3U2lqQ3M1VW5tZHpHWGRZSmhKUEo6dVZNbVB4eE5MYzF2ckJUREtuU1daa2g1cmlJTHh2dEw=
+Authorization: Basic <Constants.BASIC_AUTH>
 ```
 
 Body:
@@ -74,7 +74,7 @@ val okHttpClient = OkHttpClient.Builder()
     .build()
 
 val retrofit = Retrofit.Builder()
-    .baseUrl("https://api.rooticare.com")
+    .baseUrl("https://mct-api.rooticare.com")
     .client(okHttpClient)
     .addConverterFactory(GsonConverterFactory.create())
     .build()
@@ -178,7 +178,7 @@ val apiService = retrofit.create(RootiApiService::class.java)
 **Request Headers:**
 
 ```
-Authorization: Basic dVlqeHgzbGU0enM3U2lqQ3M1VW5tZHpHWGRZSmhKUEo6dVZNbVB4eE5MYzF2ckJUREtuU1daa2g1cmlJTHh2dEw=
+Authorization: Basic <Constants.BASIC_AUTH>
 Content-Type: application/json
 ```
 
@@ -220,7 +220,7 @@ interface RootiAuthService {
 }
 
 // Usage
-val basicAuth = "Basic dVlqeHgzbGU0enM3U2lqQ3M1VW5tZHpHWGRZSmhKUEo6dVZNbVB4eE5MYzF2ckJUREtuU1daa2g1cmlJTHh2dEw="
+val basicAuth = Constants.BASIC_AUTH
 val response = authService.getToken(
     basicAuth = basicAuth,
     body = mapOf("grant_type" to "client_credentials")
